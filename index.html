@@ -47,16 +47,17 @@
   /* ---------- Cabeçalho ---------- */
   .topo {
     display: flex; align-items: center; gap: 1.75rem;
-    padding: .625rem 1.5rem; min-height: 6.125rem; color: #fff;
+    padding: .375rem 1.5rem .375rem 0; min-height: 6.125rem; color: #fff;
     background:
       linear-gradient(90deg, rgba(11,31,69,.98) 0%, rgba(11,31,69,.93) 55%, rgba(11,31,69,.55) 100%),
       url("cabecalho.jpg") right center / cover no-repeat,
       var(--navy-900);
   }
-  .marca { display: flex; align-items: center; gap: .75rem; padding-right: 1.75rem; border-right: 2px solid rgba(255,255,255,.35); }
-  .brasao { width: 5.25rem; height: 5.25rem; object-fit: contain; display: block; }
+  .marca { flex: none; width: 14.125rem; align-self: stretch; display: flex; align-items: center; justify-content: center; border-right: 2px solid rgba(255,255,255,.35); }
+  .brasao { width: 7.5rem; height: 7.5rem; object-fit: contain; display: block; }
   .titulo h1 { margin: 0; font-size: 2.25rem; font-weight: 800; letter-spacing: -.3px; line-height: 1.05; }
   .titulo p { margin: .25rem 0 0; font-size: 1.1875rem; opacity: .92; }
+  .titulo p.municipio { margin-top: .375rem; font-size: 1.0625rem; font-weight: 600; opacity: 1; }
   .filtros { margin-left: auto; display: flex; gap: 1.125rem; flex-wrap: wrap; }
   .filtro label { display: block; font-size: .9375rem; font-weight: 600; margin-bottom: .375rem; }
   .filtro select {
@@ -322,12 +323,13 @@
   @media (max-width: 900px) {
     html { font-size: 16px; }
     .topo { flex-wrap: wrap; gap: .875rem; padding: .875rem 1rem; }
-    .marca { border-right: 0; padding-right: 0; }
+    .marca { width: auto; align-self: center; border-right: 0; }
     /* brasão e título lado a lado; filtros na linha de baixo */
-    .brasao { width: 3.5rem; height: 3.5rem; }
+    .brasao { width: 4.75rem; height: 4.75rem; }
     .titulo { flex: 1 1 0; min-width: 0; }
     .titulo h1 { font-size: 1.3rem; }
     .titulo p { font-size: .8rem; margin-top: .125rem; }
+    .titulo p.municipio { font-size: .8rem; margin-top: .25rem; }
     .filtros { margin-left: 0; width: 100%; }
     .filtro { flex: 1 1 8.75rem; }
     .filtro select { width: 100%; }
@@ -358,6 +360,7 @@
   <div class="titulo">
     <h1>OKR – Gestão 2025–2028</h1>
     <p>Painel de Acompanhamento da Gestão Estratégica</p>
+    <p class="municipio">Município de Santo Cristo - RS</p>
   </div>
   <div class="filtros">
     <div class="filtro"><label for="f-ano">Ano</label><select id="f-ano"></select></div>
