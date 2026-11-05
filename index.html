@@ -47,13 +47,18 @@
   /* ---------- Cabeçalho ---------- */
   .topo {
     display: flex; align-items: center; gap: 1.75rem;
-    padding: .375rem 1.5rem .375rem 0; min-height: 6.125rem; color: #fff;
+    grid-column: 2; grid-row: 1; position: relative;
+    padding: .375rem 1.5rem .375rem 1.75rem; min-height: 6.125rem; color: #fff;
     background:
       linear-gradient(90deg, rgba(11,31,69,.98) 0%, rgba(11,31,69,.93) 55%, rgba(11,31,69,.55) 100%),
       url("cabecalho.jpg") right center / cover no-repeat,
       var(--navy-900);
   }
-  .marca { flex: none; width: 14.125rem; align-self: stretch; display: flex; align-items: center; justify-content: center; border-right: 2px solid rgba(255,255,255,.35); }
+  .topo::before { content: ""; position: absolute; left: 0; top: .625rem; bottom: .625rem; border-left: 2px solid rgba(255,255,255,.35); }
+  /* brasão no topo do menu lateral */
+  .marca { display: flex; flex-direction: column; align-items: center; gap: .375rem; margin-bottom: 1.25rem; }
+  .marca b { font-size: 1.0625rem; font-weight: 700; }
+  .brasao-topo, .titulo p.municipio { display: none; }  /* só no celular */
   .brasao { width: 7.5rem; height: 7.5rem; object-fit: contain; display: block; }
   .titulo h1 { margin: 0; font-size: 2.25rem; font-weight: 800; letter-spacing: -.3px; line-height: 1.05; }
   .titulo p { margin: .25rem 0 0; font-size: 1.1875rem; opacity: .92; }
@@ -68,9 +73,9 @@
   .filtro select.ativo { box-shadow: 0 0 0 .1875rem var(--ambar); }
 
   /* ---------- Estrutura ---------- */
-  .corpo { display: grid; grid-template-columns: 14.125rem 1fr; min-height: calc(100vh - 6.125rem); }
+  .corpo { display: grid; grid-template-columns: 14.125rem 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
   .corpo > * { min-width: 0; }
-  .lateral { background: linear-gradient(180deg, var(--navy-900), var(--navy-800)); padding: 1.375rem .625rem; color: #fff; display: flex; flex-direction: column; }
+  .lateral { grid-column: 1; grid-row: 1 / span 2; background: linear-gradient(180deg, var(--navy-900), var(--navy-800)); padding: .75rem .625rem 1.375rem; color: #fff; display: flex; flex-direction: column; }
   .menu { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .375rem; }
   .menu button {
     width: 100%; display: flex; align-items: center; gap: .875rem; text-align: left;
@@ -91,7 +96,7 @@
   .fonte .ok { color: #7ee2a0; }
   .fonte .aviso { color: #ffd166; }
 
-  .conteudo { padding: 1rem .875rem 1.25rem; display: flex; flex-direction: column; gap: .875rem; min-width: 0; }
+  .conteudo { grid-column: 2; grid-row: 2; padding: 1rem .875rem 1.25rem; display: flex; flex-direction: column; gap: .875rem; min-width: 0; }
 
   /* ---------- KPIs ---------- */
   .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .75rem; }
@@ -323,13 +328,15 @@
   @media (max-width: 900px) {
     html { font-size: 16px; }
     .topo { flex-wrap: wrap; gap: .875rem; padding: .875rem 1rem; }
-    .marca { width: auto; align-self: center; border-right: 0; }
+    .corpo { grid-template-rows: none; }
+    .topo, .lateral, .conteudo { grid-column: auto; grid-row: auto; }
+    .topo::before, .marca { display: none; }
     /* brasão e título lado a lado; filtros na linha de baixo */
-    .brasao { width: 4.75rem; height: 4.75rem; }
+    .brasao-topo { display: block; flex: none; width: 4.75rem; height: 4.75rem; object-fit: contain; }
     .titulo { flex: 1 1 0; min-width: 0; }
     .titulo h1 { font-size: 1.3rem; }
     .titulo p { font-size: .8rem; margin-top: .125rem; }
-    .titulo p.municipio { font-size: .8rem; margin-top: .25rem; }
+    .titulo p.municipio { display: block; font-size: .8rem; margin-top: .25rem; }
     .filtros { margin-left: 0; width: 100%; }
     .filtro { flex: 1 1 8.75rem; }
     .filtro select { width: 100%; }
@@ -352,26 +359,28 @@
 </head>
 <body>
 
-<header class="topo">
-  <div class="marca">
-    <img class="brasao" src="Brasao_SantoCristo.png?v=2" alt="Brasão de Santo Cristo" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-    <svg viewBox="0 0 48 54" width="54" height="60" style="display:none"><path d="M24 2L4 9v17c0 13 9 22 20 26 11-4 20-13 20-26V9z" fill="#1e63d6" stroke="#f2c230" stroke-width="3"/><path d="M12 30l7-9 6 7 4-4 7 6" fill="none" stroke="#fff" stroke-width="2.6"/><rect x="12" y="36" width="24" height="5" fill="#1f9d3a"/></svg>
-  </div>
-  <div class="titulo">
-    <h1>OKR – Gestão 2025–2028</h1>
-    <p>Painel de Acompanhamento da Gestão Estratégica</p>
-    <p class="municipio">Município de Santo Cristo - RS</p>
-  </div>
-  <div class="filtros">
-    <div class="filtro"><label for="f-ano">Ano</label><select id="f-ano"></select></div>
-    <div class="filtro"><label for="f-sec">Secretaria</label><select id="f-sec"></select></div>
-    <div class="filtro"><label for="f-eixo">Eixo Estratégico</label><select id="f-eixo"></select></div>
-    <div class="filtro"><label for="f-sit">Situação</label><select id="f-sit"></select></div>
-  </div>
-</header>
-
 <div class="corpo">
+  <header class="topo">
+    <img class="brasao-topo" src="Brasao_SantoCristo.png?v=2" alt="Brasão de Santo Cristo" onerror="this.style.display='none'">
+    <div class="titulo">
+      <h1>OKR – Gestão 2025–2028</h1>
+      <p>Painel de Acompanhamento da Gestão Estratégica</p>
+      <p class="municipio">Município de Santo Cristo - RS</p>
+    </div>
+    <div class="filtros">
+      <div class="filtro"><label for="f-ano">Ano</label><select id="f-ano"></select></div>
+      <div class="filtro"><label for="f-sec">Secretaria</label><select id="f-sec"></select></div>
+      <div class="filtro"><label for="f-eixo">Eixo Estratégico</label><select id="f-eixo"></select></div>
+      <div class="filtro"><label for="f-sit">Situação</label><select id="f-sit"></select></div>
+    </div>
+  </header>
+
   <nav class="lateral">
+    <div class="marca">
+      <img class="brasao" src="Brasao_SantoCristo.png?v=2" alt="Brasão de Santo Cristo" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <svg viewBox="0 0 48 54" width="54" height="60" style="display:none"><path d="M24 2L4 9v17c0 13 9 22 20 26 11-4 20-13 20-26V9z" fill="#1e63d6" stroke="#f2c230" stroke-width="3"/><path d="M12 30l7-9 6 7 4-4 7 6" fill="none" stroke="#fff" stroke-width="2.6"/><rect x="12" y="36" width="24" height="5" fill="#1f9d3a"/></svg>
+      <b>Santo Cristo - RS</b>
+    </div>
     <ul class="menu" id="menu"></ul>
     <div class="fonte" id="fonte">Nenhuma planilha conectada.</div>
   </nav>
