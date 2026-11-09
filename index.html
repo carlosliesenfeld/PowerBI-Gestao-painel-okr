@@ -284,7 +284,8 @@
   .objs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); gap: .75rem; }
   .objetivo { border: 1px solid var(--borda); border-left: .25rem solid var(--cor-eixo, var(--azul)); border-radius: .5rem; padding: .625rem .875rem .375rem; min-width: 0; }
   .obj-cab { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; font-size: 1rem; color: var(--navy-800); }
-  .obj-cab span { font-weight: 800; color: var(--cor-eixo, var(--azul)); }
+  .obj-cab span { font-weight: 800; color: var(--cor-eixo, var(--azul)); text-align: right; white-space: nowrap; font-size: .875rem; }
+  .obj-cab span em { display: block; font-style: normal; font-weight: 600; font-size: .75rem; color: var(--azul); }
   .objetivo > small { display: block; color: var(--texto-3); font-size: .75rem; margin-bottom: .25rem; }
   .objetivo .kr { grid-template-columns: 1fr; gap: .25rem; }
   .matriz tr.grupo td { background: #eef2f8 !important; }
@@ -1456,10 +1457,13 @@ function renderMetas(d) {
     const objetivos = [...objs.entries()].map(([nome, krs]) => {
       const lista = [...krs.entries()].map(([n, ps]) => calcularKR(n, ps)).sort((a, b) => b.proj - a.proj);
       const ps = lista.flatMap(k => k.ps);
-      return { nome, krs: lista, ps, proj: soma(ps, p => p.proj), score: media(lista.filter(k => k.total > 0).map(k => k.real / k.total)) };
+      const comMeta = lista.filter(k => k.total > 0);
+      return { nome, krs: lista, ps, proj: soma(ps, p => p.proj), score: media(comMeta.map(k => k.real / k.total)),
+        andamento: media(comMeta.map(k => (k.exec + k.lic) / k.total)) };  // em execução + em licitação
     }).sort((a, b) => ni(a.nome) - ni(b.nome) || b.proj - a.proj);
     const ps = objetivos.flatMap(o => o.ps);
-    return { eixo, objetivos, ps, proj: soma(ps, p => p.proj), score: media(objetivos.filter(o => isFinite(o.score)).map(o => o.score)) };
+    const validos = objetivos.filter(o => isFinite(o.score));
+    return { eixo, objetivos, ps, proj: soma(ps, p => p.proj), score: media(validos.map(o => o.score)), andamento: media(validos.map(o => o.andamento)) };
   }).sort((a, b) => ni(a.eixo) - ni(b.eixo) || numEixo(a.eixo) - numEixo(b.eixo) || b.proj - a.proj);
 
   const todosObj = eixos.flatMap(e => e.objetivos);
@@ -1475,7 +1479,7 @@ function renderMetas(d) {
 
   $('met-kpis').innerHTML =
     kpiHtml('k1', 'alvo', 'Eixos estratégicos', nEixos, `${nObj} objetivos estratégicos`) +
-    kpiHtml('k5', 'metas', 'Progresso dos objetivos', fmtPct(scoreMedio, 0), 'meta física concluída') +
+    kpiHtml('k5', 'metas', 'Progresso dos objetivos', fmtPct(scoreMedio, 0), `concluído · + ${fmtPct(media(todosObj.filter(o => isFinite(o.score)).map(o => o.andamento)), 0)} em andamento`) +
     kpiHtml('k4', 'cone', 'Pavimentação concluída', fmtNum(m2Real, 0) + ' m²', m2Meta ? `de ${fmtNum(m2Meta, 0)} m² (${fmtPct(m2Real / m2Meta, 0)})` : 'sem meta no filtro') +
     kpiHtml('k3', 'caminhao', 'Frota entregue', unMeta ? `${fmtNum(unReal, 0)} de ${fmtNum(unMeta, 0)}` : '—', 'veículos e equipamentos') +
     kpiHtml('k2', 'check', 'Iniciativas concluídas', `${concl.length} de ${d.length}`, fmtPct(d.length ? concl.length / d.length : NaN, 0) + ' do total') +
@@ -1490,7 +1494,7 @@ function renderMetas(d) {
         <div class="prog" title="Concluído ${fmtQtd(k.real, k.u)} · Em execução ${fmtQtd(k.exec, k.u)} · Em licitação ${fmtQtd(k.lic, k.u)} · Meta ${fmtQtd(k.total, k.u)}">
           <span style="width:${f(k.real)}%;background:#1f9d3a"></span><span style="width:${f(k.exec)}%;background:#1e63d6"></span><span style="width:${f(k.lic)}%;background:#f0b323"></span>
         </div>
-        <div class="num"><span><b>${fmtPct(k.total ? k.real / k.total : NaN, 0)}</b> · ${fmtQtd(k.real, k.u)} de ${fmtQtd(k.total, k.u)}</span><span>${k.exec ? fmtPct(k.exec / k.total, 0) + ' em execução' : ''}</span></div>
+        <div class="num"><span><b>${fmtPct(k.total ? k.real / k.total : NaN, 0)}</b> · ${fmtQtd(k.real, k.u)} de ${fmtQtd(k.total, k.u)}</span><span>${[k.exec ? fmtPct(k.exec / k.total, 0) + ' em execução' : '', k.lic ? fmtPct(k.lic / k.total, 0) + ' em licitação' : ''].filter(Boolean).join(' · ')}</span></div>
       </div></div>`;
   };
 
@@ -1499,13 +1503,13 @@ function renderMetas(d) {
     const cor = ni(e.eixo) ? '#94a3b8' : corDoEixo(e.eixo, i);
     const conc = e.ps.filter(p => p.situacao === 'Concluído').length;
     const objs = e.objetivos.map(o => `<div class="objetivo">
-        <div class="obj-cab"><b>${ni(o.nome) ? '<span style="color:var(--texto-3)">Objetivo não informado</span>' : esc(o.nome)}</b><span>${isFinite(o.score) ? Math.round(o.score * 100) + '%' : '—'}</span></div>
+        <div class="obj-cab"><b>${ni(o.nome) ? '<span style="color:var(--texto-3)">Objetivo não informado</span>' : esc(o.nome)}</b><span>${isFinite(o.score) ? Math.round(o.score * 100) + '% concluído' : '—'}${o.andamento > 0 ? `<em>${Math.round(o.andamento * 100)}% em andamento</em>` : ''}</span></div>
         <small>${o.ps.length} iniciativa(s) · ${fmtMi(o.proj)}</small>
         ${o.krs.map(krHtml).join('')}
       </div>`).join('');
     return `<div class="card obj" style="--cor-eixo:${cor}">
       <div class="obj-topo">${anel(e.score, cor)}<div><h2>${esc(e.eixo)}</h2>
-        <div class="meta-info">${e.objetivos.filter(o => !ni(o.nome)).length} objetivo(s) estratégico(s) · ${e.ps.length} iniciativas · ${conc} concluída(s) · ${fmtMi(e.proj)} projetados</div></div></div>
+        <div class="meta-info"><b>${isFinite(e.score) ? Math.round(e.score * 100) + '% concluído' : '—'}</b>${e.andamento > 0 ? ` · ${Math.round(e.andamento * 100)}% em andamento` : ''} · ${e.objetivos.filter(o => !ni(o.nome)).length} objetivo(s) estratégico(s) · ${e.ps.length} iniciativas · ${conc} concluída(s) · ${fmtMi(e.proj)} projetados</div></div></div>
       <div class="objs-grid">${objs}</div></div>`;
   }).join('') : '<div class="card vazio">Nenhuma iniciativa no filtro.</div>';
 
