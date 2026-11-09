@@ -624,10 +624,10 @@ const texto = v => (v == null ? '' : String(v)).trim();
 const COLUNAS = {
   status:   k => k === 'status',
   ano:      k => k.startsWith('ano'),
-  eixo:     k => k.startsWith('acaope'),
+  eixo:     k => k.startsWith('eixo') || k.startsWith('acaope'),   // coluna D "Eixo Estratégico" (antes "Ação PE")
   sec:      k => k.startsWith('secret'),
   comunidade: k => k.startsWith('comunidade'),
-  objetivo: k => k.startsWith('objetivo'),
+  objetivo: k => k.startsWith('objetivo'),                         // coluna H "Objetivo Estratégicos" (antes "Objetivo:")
   acao:     k => k === 'acao',
   proj:     k => k === 'valorprojetado',
   proprio:  k => k.includes('proprio'),
@@ -1287,7 +1287,7 @@ const ETAPA_ROTULO = { dtAut: 'autorização', dtEdital: 'edital', dtLic: 'licit
 const CHECAGENS = [
   { k: 'status',  r: 'Sem status', t: p => p.situacao === 'Não informado' },
   { k: 'sec',     r: 'Sem secretaria', t: p => p.sec === 'Não informada' },
-  { k: 'eixo',    r: 'Sem eixo estratégico (Ação PE)', t: p => p.eixo === 'Não informado' },
+  { k: 'eixo',    r: 'Sem eixo estratégico', t: p => p.eixo === 'Não informado' },
   { k: 'ano',     r: 'Sem ano de início', t: p => p.ano === 'Sem ano' },
   { k: 'valor',   r: 'Sem valor projetado', t: p => !p.proj },
   { k: 'fonte',   r: 'Fonte de recurso não definida (total ou parcial)', t: p => p.proj > 0 && semFonte(p) > 1 },
@@ -1389,11 +1389,15 @@ function renderPrazos(d) {
 
 /* =====================================================================
    Página: Metas Estratégicas (OKRs)
-   Objetivo = Eixo (Ação PE); Resultado-chave (KR) = "Objetivo" da planilha.
+   Eixo = coluna "Eixo Estratégico"; Objetivo estratégico = coluna "Objetivo Estratégicos".
    Progresso físico pela coluna "Meta 25/28": m² (pavimentação), unidades (frota)
    ou, sem meta, contagem de iniciativas.
    ===================================================================== */
 const CORES_EIXO = ['#1846b8', '#1f9d3a', '#8b4fd8', '#12a594', '#f0a91a', '#e04848', '#64748b'];
+// cores do Mapa Estratégico 2026/2029; demais eixos usam CORES_EIXO
+const corDoEixo = (nome, i) => { const n = normaliza(nome);
+  return n.includes('governanca') ? '#1d5f7a' : n.includes('competitivo') ? '#c75b1c' : n.includes('desenvolvimento') ? '#3f9b35' : CORES_EIXO[i % CORES_EIXO.length]; };
+const numEixo = e => { const m = /^\s*(\d+)/.exec(e); return m ? +m[1] : 99; };
 const fmtQtd = (v, u) => u === 'm²' ? fmtNum(v, 0) + ' m²' : u === 'unid.' ? fmtNum(v, 0) + ' unid.' : fmtNum(v, 0) + (v === 1 ? ' iniciativa' : ' iniciativas');
 
 function unidadeKR(ps) {
@@ -1433,7 +1437,7 @@ function renderMetas(d) {
     const scores = lista.filter(k => k.total > 0).map(k => k.real / k.total);
     const ps = [...krs.values()].flat();
     return { eixo, krs: lista, score: scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : NaN, ps, proj: soma(ps, p => p.proj) };
-  }).sort((a, b) => (a.eixo === 'Não informado') - (b.eixo === 'Não informado') || b.proj - a.proj);
+  }).sort((a, b) => (a.eixo === 'Não informado') - (b.eixo === 'Não informado') || numEixo(a.eixo) - numEixo(b.eixo) || b.proj - a.proj);
 
   const todosKR = objetivos.flatMap(o => o.krs).filter(k => k.total > 0);
   const m2 = todosKR.filter(k => k.u === 'm²'), un = todosKR.filter(k => k.u === 'unid.');
@@ -1445,8 +1449,8 @@ function renderMetas(d) {
   const nEixos = objetivos.filter(o => o.eixo !== 'Não informado').length;
 
   $('met-kpis').innerHTML =
-    kpiHtml('k1', 'alvo', 'Eixos estratégicos', nEixos, `${objetivos.reduce((s, o) => s + o.krs.length, 0)} resultados-chave`) +
-    kpiHtml('k5', 'metas', 'Progresso médio dos KRs', fmtPct(scoreMedio, 0), 'meta física concluída') +
+    kpiHtml('k1', 'alvo', 'Eixos estratégicos', nEixos, `${objetivos.reduce((s, o) => s + o.krs.filter(k => k.nome !== 'Não informado').length, 0)} objetivos estratégicos`) +
+    kpiHtml('k5', 'metas', 'Progresso dos objetivos', fmtPct(scoreMedio, 0), 'meta física concluída') +
     kpiHtml('k4', 'cone', 'Pavimentação concluída', fmtNum(m2Real, 0) + ' m²', m2Meta ? `de ${fmtNum(m2Meta, 0)} m² (${fmtPct(m2Real / m2Meta, 0)})` : 'sem meta no filtro') +
     kpiHtml('k3', 'caminhao', 'Frota entregue', unMeta ? `${fmtNum(unReal, 0)} de ${fmtNum(unMeta, 0)}` : '—', 'veículos e equipamentos') +
     kpiHtml('k2', 'check', 'Iniciativas concluídas', `${concl.length} de ${d.length}`, fmtPct(d.length ? concl.length / d.length : NaN, 0) + ' do total') +
@@ -1454,7 +1458,7 @@ function renderMetas(d) {
 
   // Cartões de objetivo
   $('met-objetivos').innerHTML = objetivos.length ? objetivos.map((o, i) => {
-    const cor = o.eixo === 'Não informado' ? '#94a3b8' : CORES_EIXO[i % CORES_EIXO.length];
+    const cor = o.eixo === 'Não informado' ? '#94a3b8' : corDoEixo(o.eixo, i);
     const krs = o.krs.map(k => {
       const f = v => k.total ? v / k.total * 100 : 0;
       const nota = k.semMeta ? ` · ${k.semMeta} sem meta` : '';
@@ -1486,7 +1490,7 @@ function renderMetas(d) {
     }).join('')}<td class="num"><b>${o.ps.length}</b></td><td class="num">${fmtMi(o.proj)}</td></tr>`).join('')}</tbody>`;
 
   const parecidos = [...new Set(TODOS.map(p => p.eixo))].filter((e, _, a) => a.some(x => x !== e && normaliza(x).slice(0, 8) === normaliza(e).slice(0, 8)));
-  $('met-nota').innerHTML = 'Progresso do objetivo = média dos resultados-chave (meta física concluída). Barras: <span style="color:#1f9d3a">■</span> concluído · <span style="color:#1e63d6">■</span> em execução · <span style="color:#d89a0c">■</span> em licitação.' +
+  $('met-nota').innerHTML = 'Progresso do eixo = média dos objetivos estratégicos (meta física concluída). Barras: <span style="color:#1f9d3a">■</span> concluído · <span style="color:#1e63d6">■</span> em execução · <span style="color:#d89a0c">■</span> em licitação.' +
     (parecidos.length ? ` <br>Atenção: eixos com nomes parecidos na planilha (${parecidos.map(esc).join(', ')}) aparecem separados.` : '');
 }
 
