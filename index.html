@@ -280,7 +280,15 @@
   .total-linha { display: flex; justify-content: space-between; border-top: 1px solid var(--borda); margin-top: .5rem; padding-top: .5rem; font-size: .875rem; }
 
   /* Metas Estratégicas (OKRs) */
-  .objetivos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .875rem; }
+  .objetivos { display: grid; grid-template-columns: minmax(0, 1fr); gap: .875rem; }
+  .objs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); gap: .75rem; }
+  .objetivo { border: 1px solid var(--borda); border-left: .25rem solid var(--cor-eixo, var(--azul)); border-radius: .5rem; padding: .625rem .875rem .375rem; min-width: 0; }
+  .obj-cab { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; font-size: 1rem; color: var(--navy-800); }
+  .obj-cab span { font-weight: 800; color: var(--cor-eixo, var(--azul)); }
+  .objetivo > small { display: block; color: var(--texto-3); font-size: .75rem; margin-bottom: .25rem; }
+  .objetivo .kr { grid-template-columns: 1fr; gap: .25rem; }
+  .matriz tr.grupo td { background: #eef2f8 !important; }
+  .matriz td.sub { padding-left: 1.5rem; }
   .obj { border-top: .3125rem solid var(--cor-eixo, var(--azul)); }
   .obj-topo { display: flex; align-items: center; gap: .875rem; margin-bottom: .625rem; }
   .obj-topo svg { width: 4.625rem; height: 4.625rem; flex: none; }
@@ -528,7 +536,7 @@
    ===================================================================== */
 const CONFIG = {
   aba: 'Investimentos',
-  arquivoPadrao: 'OKR - Gestão 25 - 28.xlsx', // usado quando o painel é aberto por um servidor local (http)
+  arquivoPadrao: 'OKR - Gestão 25 - 28 (versao 09_11_2026).xlsx', // usado quando o painel é aberto por um servidor local (http)
   verificarACadaMs: 30000,                       // checagem automática de alteração no arquivo
   // Link "Publicar na Web" do Google Planilhas (formato .xlsx). Se preenchido aqui, o painel
   // abre direto nele, sem pedir nada. Também pode ser colado na tela de conexão.
@@ -543,7 +551,8 @@ const SITUACOES = {
   'em projeto':        { rotulo: 'Em projeto',        cor: '#8b4fd8', ordem: 3, avanco: 25 },
   'aguardando emenda': { rotulo: 'Aguardando emenda', cor: '#e04848', ordem: 5, avanco: 5 },
   'projetado':         { rotulo: 'Projetado',         cor: '#64748b', ordem: 6, avanco: 10 },
-  '':                  { rotulo: 'Não informado',     cor: '#cbd5e1', ordem: 7, avanco: 0 }
+  'sem movimentacao':  { rotulo: 'Sem movimentação',  cor: '#a1887f', ordem: 7, avanco: 0 },
+  '':                  { rotulo: 'Não informado',     cor: '#cbd5e1', ordem: 8, avanco: 0 }
 };
 
 const NOMES_SECRETARIA = {
@@ -628,7 +637,9 @@ const COLUNAS = {
   sec:      k => k.startsWith('secret'),
   comunidade: k => k.startsWith('comunidade'),
   objetivo: k => k.startsWith('objetivo'),                         // coluna H "Objetivo Estratégicos" (antes "Objetivo:")
-  acao:     k => k === 'acao',
+  acao:     k => k === 'acao',                                      // planilha antiga (antes de 09/11/2026)
+  tituloAcao: k => k.startsWith('tituloacao'),                      // coluna I "Título Ação"
+  descricao: k => k.startsWith('descricao'),                        // coluna J "Descrição da Ação"
   proj:     k => k === 'valorprojetado',
   proprio:  k => k.includes('proprio'),
   melhoria: k => k.includes('melhoria'),
@@ -659,13 +670,15 @@ function lerPlanilha(buf) {
     const i = cab.findIndex(k => k && teste(k));
     if (i >= 0) col[nome] = i;
   }
-  const faltando = ['status', 'acao', 'proj'].filter(n => col[n] == null);
+  const faltando = ['status', 'proj'].filter(n => col[n] == null);
+  if (col.acao == null && col.descricao == null && col.tituloAcao == null) faltando.push('Título Ação / Descrição da Ação');
   if (faltando.length) throw new Error('Colunas obrigatórias ausentes: ' + faltando.join(', '));
 
   const pega = (l, nome) => col[nome] == null ? null : l[col[nome]];
   const projetos = [];
   for (const l of linhas.slice(iCab + 1)) {
-    const acao = texto(pega(l, 'acao'));
+    const tAcao = texto(pega(l, 'tituloAcao'));
+    const acao = texto(pega(l, 'descricao')) || texto(pega(l, 'acao')) || tAcao;
     if (!acao) continue;
     const stKey = normaliza(pega(l, 'status'));
     const st = SITUACOES[stKey] || { rotulo: texto(pega(l, 'status')), cor: '#94a3b8', ordem: 8, avanco: 0 };
@@ -674,9 +687,10 @@ function lerPlanilha(buf) {
     const p = {
       situacao: st.rotulo, cor: st.cor, ordem: st.ordem,
       ano: ano ? String(Math.round(ano)) : 'Sem ano',
-      eixo: texto(pega(l, 'eixo')) || 'Não informado',
+      eixo: texto(pega(l, 'eixo')).replace(/^(\d+)\s*[-–—]+\s*/, '$1 - ') || 'Não informado',  // "3 -- X" vira "3 - X"
       sec: texto(pega(l, 'sec')) || 'Não informada',
       objetivo: texto(pega(l, 'objetivo')) || 'Não informado',
+      acaoTitulo: tAcao || 'Não informado',
       comunidade: texto(pega(l, 'comunidade')).replace(/\s*\r?\n\s*/g, ' / '),
       origem: texto(pega(l, 'origem')).replace(/\s+/g, ' '),
       titulo, detalhe: resto.join(' · '),
@@ -908,7 +922,7 @@ const COLS_TABELA = [
 ];
 function renderTabela(d) {
   const q = normaliza($('busca').value);
-  let linhas = q ? d.filter(p => normaliza(p.titulo + ' ' + p.detalhe + ' ' + p.sec).includes(q)) : d.slice();
+  let linhas = q ? d.filter(p => normaliza(p.titulo + ' ' + p.detalhe + ' ' + p.acaoTitulo + ' ' + p.objetivo + ' ' + p.sec).includes(q)) : d.slice();
   const { campo, asc } = ordenacao;
   const val = p => { const v = p[campo]; return v instanceof Date ? v.getTime() : v; };
   linhas.sort((a, b) => {
@@ -969,7 +983,7 @@ function renderObras(d) {
   renderObrasKpis(d);
   renderFunil(d);
   renderGantt(d);
-  renderBarrasGrupo('obras-tipo', d, p => p.objetivo, 8, 'Não informado');
+  renderBarrasGrupo('obras-tipo', d, p => p.acaoTitulo, 8, 'Não informado');
   renderBarrasGrupo('obras-comunidade', d, p => p.comunidade || 'Não informada', 10, 'Não informada');
   renderMarcos(d);
 }
@@ -1288,6 +1302,8 @@ const CHECAGENS = [
   { k: 'status',  r: 'Sem status', t: p => p.situacao === 'Não informado' },
   { k: 'sec',     r: 'Sem secretaria', t: p => p.sec === 'Não informada' },
   { k: 'eixo',    r: 'Sem eixo estratégico', t: p => p.eixo === 'Não informado' },
+  { k: 'objetivo', r: 'Sem objetivo estratégico', t: p => p.objetivo === 'Não informado' },
+  { k: 'titulo',  r: 'Sem título da ação', t: p => p.acaoTitulo === 'Não informado' },
   { k: 'ano',     r: 'Sem ano de início', t: p => p.ano === 'Sem ano' },
   { k: 'valor',   r: 'Sem valor projetado', t: p => !p.proj },
   { k: 'fonte',   r: 'Fonte de recurso não definida (total ou parcial)', t: p => p.proj > 0 && semFonte(p) > 1 },
@@ -1389,7 +1405,7 @@ function renderPrazos(d) {
 
 /* =====================================================================
    Página: Metas Estratégicas (OKRs)
-   Eixo = coluna "Eixo Estratégico"; Objetivo estratégico = coluna "Objetivo Estratégicos".
+   Eixo (col. D) → Objetivo estratégico (col. H) → Título da ação (col. I, faz o papel de resultado-chave).
    Progresso físico pela coluna "Meta 25/28": m² (pavimentação), unidades (frota)
    ou, sem meta, contagem de iniciativas.
    ===================================================================== */
@@ -1424,74 +1440,94 @@ const anel = (pct, cor) => {
 };
 
 function renderMetas(d) {
-  // Agrupa eixo → KR
-  const eixos = new Map();
+  // Eixo → Objetivo estratégico → Título da ação (resultado-chave)
+  const arvore = new Map();
   d.forEach(p => {
-    if (!eixos.has(p.eixo)) eixos.set(p.eixo, new Map());
-    const krs = eixos.get(p.eixo);
-    if (!krs.has(p.objetivo)) krs.set(p.objetivo, []);
-    krs.get(p.objetivo).push(p);
+    if (!arvore.has(p.eixo)) arvore.set(p.eixo, new Map());
+    const objs = arvore.get(p.eixo);
+    if (!objs.has(p.objetivo)) objs.set(p.objetivo, new Map());
+    const krs = objs.get(p.objetivo);
+    if (!krs.has(p.acaoTitulo)) krs.set(p.acaoTitulo, []);
+    krs.get(p.acaoTitulo).push(p);
   });
-  const objetivos = [...eixos.entries()].map(([eixo, krs]) => {
-    const lista = [...krs.entries()].map(([n, ps]) => calcularKR(n, ps)).sort((a, b) => b.proj - a.proj);
-    const scores = lista.filter(k => k.total > 0).map(k => k.real / k.total);
-    const ps = [...krs.values()].flat();
-    return { eixo, krs: lista, score: scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : NaN, ps, proj: soma(ps, p => p.proj) };
-  }).sort((a, b) => (a.eixo === 'Não informado') - (b.eixo === 'Não informado') || numEixo(a.eixo) - numEixo(b.eixo) || b.proj - a.proj);
+  const media = xs => xs.length ? xs.reduce((s, v) => s + v, 0) / xs.length : NaN;
+  const ni = n => n === 'Não informado';
+  const eixos = [...arvore.entries()].map(([eixo, objs]) => {
+    const objetivos = [...objs.entries()].map(([nome, krs]) => {
+      const lista = [...krs.entries()].map(([n, ps]) => calcularKR(n, ps)).sort((a, b) => b.proj - a.proj);
+      const ps = lista.flatMap(k => k.ps);
+      return { nome, krs: lista, ps, proj: soma(ps, p => p.proj), score: media(lista.filter(k => k.total > 0).map(k => k.real / k.total)) };
+    }).sort((a, b) => ni(a.nome) - ni(b.nome) || b.proj - a.proj);
+    const ps = objetivos.flatMap(o => o.ps);
+    return { eixo, objetivos, ps, proj: soma(ps, p => p.proj), score: media(objetivos.filter(o => isFinite(o.score)).map(o => o.score)) };
+  }).sort((a, b) => ni(a.eixo) - ni(b.eixo) || numEixo(a.eixo) - numEixo(b.eixo) || b.proj - a.proj);
 
-  const todosKR = objetivos.flatMap(o => o.krs).filter(k => k.total > 0);
+  const todosObj = eixos.flatMap(e => e.objetivos);
+  const todosKR = todosObj.flatMap(o => o.krs).filter(k => k.total > 0);
   const m2 = todosKR.filter(k => k.u === 'm²'), un = todosKR.filter(k => k.u === 'unid.');
   const concl = d.filter(p => p.situacao === 'Concluído');
   const totProj = soma(d, p => p.proj), projConcl = soma(concl, p => p.proj);
   const m2Meta = soma(m2, k => k.total), m2Real = soma(m2, k => k.real);
   const unMeta = soma(un, k => k.total), unReal = soma(un, k => k.real);
-  const scoreMedio = todosKR.length ? todosKR.reduce((s, k) => s + k.real / k.total, 0) / todosKR.length : NaN;
-  const nEixos = objetivos.filter(o => o.eixo !== 'Não informado').length;
+  const scoreMedio = media(todosObj.filter(o => isFinite(o.score)).map(o => o.score));
+  const nEixos = eixos.filter(e => !ni(e.eixo)).length;
+  const nObj = todosObj.filter(o => !ni(o.nome)).length;
 
   $('met-kpis').innerHTML =
-    kpiHtml('k1', 'alvo', 'Eixos estratégicos', nEixos, `${objetivos.reduce((s, o) => s + o.krs.filter(k => k.nome !== 'Não informado').length, 0)} objetivos estratégicos`) +
+    kpiHtml('k1', 'alvo', 'Eixos estratégicos', nEixos, `${nObj} objetivos estratégicos`) +
     kpiHtml('k5', 'metas', 'Progresso dos objetivos', fmtPct(scoreMedio, 0), 'meta física concluída') +
     kpiHtml('k4', 'cone', 'Pavimentação concluída', fmtNum(m2Real, 0) + ' m²', m2Meta ? `de ${fmtNum(m2Meta, 0)} m² (${fmtPct(m2Real / m2Meta, 0)})` : 'sem meta no filtro') +
     kpiHtml('k3', 'caminhao', 'Frota entregue', unMeta ? `${fmtNum(unReal, 0)} de ${fmtNum(unMeta, 0)}` : '—', 'veículos e equipamentos') +
     kpiHtml('k2', 'check', 'Iniciativas concluídas', `${concl.length} de ${d.length}`, fmtPct(d.length ? concl.length / d.length : NaN, 0) + ' do total') +
     kpiHtml('k6', 'moedas', 'Investimento concluído', fmtMi(projConcl), fmtPct(totProj ? projConcl / totProj : NaN) + ' do projetado');
 
-  // Cartões de objetivo
-  $('met-objetivos').innerHTML = objetivos.length ? objetivos.map((o, i) => {
-    const cor = o.eixo === 'Não informado' ? '#94a3b8' : corDoEixo(o.eixo, i);
-    const krs = o.krs.map(k => {
-      const f = v => k.total ? v / k.total * 100 : 0;
-      const nota = k.semMeta ? ` · ${k.semMeta} sem meta` : '';
-      return `<div class="kr">
-        <div class="nome" title="${esc(k.nome)}">${k.nome === 'Não informado' ? '<span style="color:var(--texto-3)">Objetivo não informado</span>' : esc(k.nome)}<small>${k.ps.length} iniciativa(s) · ${fmtMi(k.proj)}${nota}</small></div>
-        <div>
-          <div class="prog" title="Concluído ${fmtQtd(k.real, k.u)} · Em execução ${fmtQtd(k.exec, k.u)} · Em licitação ${fmtQtd(k.lic, k.u)} · Meta ${fmtQtd(k.total, k.u)}">
-            <span style="width:${f(k.real)}%;background:#1f9d3a"></span><span style="width:${f(k.exec)}%;background:#1e63d6"></span><span style="width:${f(k.lic)}%;background:#f0b323"></span>
-          </div>
-          <div class="num"><span><b>${fmtPct(k.total ? k.real / k.total : NaN, 0)}</b> · ${fmtQtd(k.real, k.u)} de ${fmtQtd(k.total, k.u)}</span><span>${k.exec ? fmtPct(k.exec / k.total, 0) + ' em execução' : ''}</span></div>
-        </div></div>`;
-    }).join('');
-    const conc = o.ps.filter(p => p.situacao === 'Concluído').length;
+  const krHtml = k => {
+    const f = v => k.total ? v / k.total * 100 : 0;
+    const nota = k.semMeta ? ` · ${k.semMeta} sem meta` : '';
+    return `<div class="kr">
+      <div class="nome" title="${esc(k.nome)}">${ni(k.nome) ? '<span style="color:var(--texto-3)">Título da ação não informado</span>' : esc(k.nome)}<small>${k.ps.length} iniciativa(s) · ${fmtMi(k.proj)}${nota}</small></div>
+      <div>
+        <div class="prog" title="Concluído ${fmtQtd(k.real, k.u)} · Em execução ${fmtQtd(k.exec, k.u)} · Em licitação ${fmtQtd(k.lic, k.u)} · Meta ${fmtQtd(k.total, k.u)}">
+          <span style="width:${f(k.real)}%;background:#1f9d3a"></span><span style="width:${f(k.exec)}%;background:#1e63d6"></span><span style="width:${f(k.lic)}%;background:#f0b323"></span>
+        </div>
+        <div class="num"><span><b>${fmtPct(k.total ? k.real / k.total : NaN, 0)}</b> · ${fmtQtd(k.real, k.u)} de ${fmtQtd(k.total, k.u)}</span><span>${k.exec ? fmtPct(k.exec / k.total, 0) + ' em execução' : ''}</span></div>
+      </div></div>`;
+  };
+
+  // Cartões: um por eixo, com os objetivos estratégicos dentro
+  $('met-objetivos').innerHTML = eixos.length ? eixos.map((e, i) => {
+    const cor = ni(e.eixo) ? '#94a3b8' : corDoEixo(e.eixo, i);
+    const conc = e.ps.filter(p => p.situacao === 'Concluído').length;
+    const objs = e.objetivos.map(o => `<div class="objetivo">
+        <div class="obj-cab"><b>${ni(o.nome) ? '<span style="color:var(--texto-3)">Objetivo não informado</span>' : esc(o.nome)}</b><span>${isFinite(o.score) ? Math.round(o.score * 100) + '%' : '—'}</span></div>
+        <small>${o.ps.length} iniciativa(s) · ${fmtMi(o.proj)}</small>
+        ${o.krs.map(krHtml).join('')}
+      </div>`).join('');
     return `<div class="card obj" style="--cor-eixo:${cor}">
-      <div class="obj-topo">${anel(o.score, cor)}<div><h2>${esc(o.eixo)}</h2>
-        <div class="meta-info">${o.ps.length} iniciativas · ${conc} concluída(s) · ${fmtMi(o.proj)} projetados</div></div></div>
-      ${krs}</div>`;
+      <div class="obj-topo">${anel(e.score, cor)}<div><h2>${esc(e.eixo)}</h2>
+        <div class="meta-info">${e.objetivos.filter(o => !ni(o.nome)).length} objetivo(s) estratégico(s) · ${e.ps.length} iniciativas · ${conc} concluída(s) · ${fmtMi(e.proj)} projetados</div></div></div>
+      <div class="objs-grid">${objs}</div></div>`;
   }).join('') : '<div class="card vazio">Nenhuma iniciativa no filtro.</div>';
 
-  // Matriz eixo × situação
+  // Matriz eixo/objetivo × situação
   const sits = [...new Set(TODOS.map(p => p.situacao))].sort((a, b) => ordemDe(a) - ordemDe(b));
-  const max = Math.max(1, ...objetivos.flatMap(o => sits.map(s => o.ps.filter(p => p.situacao === s).length)));
+  const max = Math.max(1, ...todosObj.flatMap(o => sits.map(s => o.ps.filter(p => p.situacao === s).length)));
   const hex2rgba = (h, a) => `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`;
+  const celulas = ps => sits.map(s => {
+    const n = ps.filter(p => p.situacao === s).length;
+    return `<td class="cel ${n ? '' : 'zero'}" style="${n ? `background:${hex2rgba(corDe(s), 0.12 + 0.55 * Math.min(1, n / max))}` : ''}">${n || '·'}</td>`;
+  }).join('');
   $('met-matriz').className = 'matriz';
-  $('met-matriz').innerHTML = `<thead><tr><th style="cursor:default">Eixo estratégico</th>${sits.map(s => `<th style="cursor:default;text-align:center">${esc(s)}</th>`).join('')}<th class="num" style="cursor:default">Total</th><th class="num" style="cursor:default">Projetado</th></tr></thead>
-    <tbody>${objetivos.map(o => `<tr><td><b>${esc(o.eixo)}</b></td>${sits.map(s => {
-      const n = o.ps.filter(p => p.situacao === s).length;
-      return `<td class="cel ${n ? '' : 'zero'}" style="${n ? `background:${hex2rgba(corDe(s), 0.12 + 0.55 * n / max)}` : ''}">${n || '·'}</td>`;
-    }).join('')}<td class="num"><b>${o.ps.length}</b></td><td class="num">${fmtMi(o.proj)}</td></tr>`).join('')}</tbody>`;
+  $('met-matriz').innerHTML = `<thead><tr><th style="cursor:default">Eixo / objetivo estratégico</th>${sits.map(s => `<th style="cursor:default;text-align:center">${esc(s)}</th>`).join('')}<th class="num" style="cursor:default">Total</th><th class="num" style="cursor:default">Projetado</th></tr></thead>
+    <tbody>${eixos.map(e => `<tr class="grupo"><td><b>${esc(e.eixo)}</b></td>${celulas(e.ps)}<td class="num"><b>${e.ps.length}</b></td><td class="num"><b>${fmtMi(e.proj)}</b></td></tr>` +
+      e.objetivos.map(o => `<tr><td class="sub">${ni(o.nome) ? 'Objetivo não informado' : esc(o.nome)}</td>${celulas(o.ps)}<td class="num">${o.ps.length}</td><td class="num">${fmtMi(o.proj)}</td></tr>`).join('')).join('')}</tbody>`;
 
-  const parecidos = [...new Set(TODOS.map(p => p.eixo))].filter((e, _, a) => a.some(x => x !== e && normaliza(x).slice(0, 8) === normaliza(e).slice(0, 8)));
-  $('met-nota').innerHTML = 'Progresso do eixo = média dos objetivos estratégicos (meta física concluída). Barras: <span style="color:#1f9d3a">■</span> concluído · <span style="color:#1e63d6">■</span> em execução · <span style="color:#d89a0c">■</span> em licitação.' +
-    (parecidos.length ? ` <br>Atenção: eixos com nomes parecidos na planilha (${parecidos.map(esc).join(', ')}) aparecem separados.` : '');
+  // Nomes parecidos (provável erro de digitação na planilha)
+  const sem = x => chave(x).replace(/s/g, '');
+  const parecidos = lista => [...new Set(lista)].filter(x => !ni(x)).filter((x, _, a) => a.some(y => y !== x && (sem(y) === sem(x) || chave(y).slice(0, 10) === chave(x).slice(0, 10))));
+  const pe = parecidos(TODOS.map(p => p.eixo)), po = parecidos(TODOS.map(p => p.objetivo));
+  $('met-nota').innerHTML = 'Progresso do objetivo = média dos títulos de ação (meta física concluída: m², unidades ou nº de iniciativas). Progresso do eixo = média dos objetivos. Barras: <span style="color:#1f9d3a">■</span> concluído · <span style="color:#1e63d6">■</span> em execução · <span style="color:#d89a0c">■</span> em licitação.' +
+    (pe.length || po.length ? ` <br>Atenção: nomes parecidos na planilha aparecem separados — ${[...pe, ...po].map(x => '“' + esc(x) + '”').join(', ')}.` : '');
 }
 
 /* =====================================================================
