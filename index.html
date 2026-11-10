@@ -548,7 +548,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-09 22:25';
+const VERSAO_PAINEL = '2026-11-10 08:45';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -734,12 +734,10 @@ function lerPlanilha(buf) {
       meta: numero(pega(l, 'meta')),
       fisico: percentual(pega(l, 'pct'))   // null = não informado
     };
-    // Avanço administrativo ESTIMADO: maior valor entre a etapa pelas datas e a etapa pelo status
-    const pelaData = p.dtEnt ? 100 : p.dtLic ? 75 : p.dtEdital ? 50 : p.dtAut ? 25 : 0;
-    p.avanco = Math.max(pelaData, st.avanco);
-    // Com % de execução física na planilha, ele substitui a estimativa
-    p.avancoFis = p.fisico != null;
-    if (p.avancoFis) p.avanco = Math.round(p.fisico * 100);
+    // Avanço = execução física, só para obras em execução (coluna %) e concluídas (100%).
+    // Demais situações ficam sem percentual (null → "—").
+    p.avanco = p.situacao === 'Concluído' ? 100
+      : p.situacao === 'Em execução' && p.fisico != null ? Math.round(p.fisico * 100) : null;
     projetos.push(p);
   }
   return projetos;
@@ -948,7 +946,7 @@ function renderSecretarias(d, total) {
 const COLS_TABELA = [
   { c: 'titulo', r: 'Projeto / Ação' }, { c: 'sec', r: 'Secretaria' },
   { c: 'proj', r: 'Valor Projetado', num: true }, { c: 'lic', r: 'Valor Licitado', num: true },
-  { c: 'ordem', r: 'Situação' }, { c: 'avanco', r: 'Avanço', info: 'Execução física da coluna % da planilha. Quando vazia, estimado pela etapa (em cinza): autorização 25%, edital 50%, licitação 75%, entrega 100% (ou pelo status, o que for maior).' },
+  { c: 'ordem', r: 'Situação' }, { c: 'avanco', r: 'Avanço', info: 'Execução física: obras em execução pela coluna % da planilha; concluídas = 100%. Demais situações não têm percentual.' },
   { c: 'dtEnt', r: 'Prev. Entrega' }
 ];
 function renderTabela(d) {
@@ -969,7 +967,8 @@ function renderTabela(d) {
     <td class="num">${p.proj ? fmtReal(p.proj) : '—'}</td>
     <td class="num">${fmtReal(p.lic)}</td>
     <td class="cen"><span class="pilula" style="background:${p.cor}${p.cor === '#cbd5e1' ? ';color:#334155' : ''}">${esc(p.situacao)}</span></td>
-    <td><span class="avanco${p.avancoFis ? '' : ' est'}" title="${p.avancoFis ? 'Execução física (planilha)' : 'Estimado pela etapa'}"><span class="mini"><span style="width:${p.avanco}%"></span></span><em>${p.avanco}%</em></span></td>
+    <td>${p.avanco == null ? `<span class="avanco est" title="${p.situacao === 'Em execução' ? 'Em execução sem % na planilha' : 'Sem percentual nesta situação'}"><em style="width:auto;margin-left:3.25rem">—</em></span>`
+      : `<span class="avanco"><span class="mini"><span style="width:${p.avanco}%"></span></span><em>${p.avanco}%</em></span>`}</td>
     <td class="cen">${fmtData(p.dtEnt)}</td></tr>`).join('');
   $('tabela').innerHTML = `<thead><tr>${cab}</tr></thead><tbody>${corpo || `<tr><td colspan="7" class="vazio">Nenhum projeto encontrado.</td></tr>`}</tbody>`;
   $('tabela').querySelectorAll('th').forEach(th => th.onclick = () => {
@@ -1449,7 +1448,7 @@ const corDoEixo = (nome, i) => { const n = normaliza(nome);
 const numEixo = e => { const m = /^\s*(\d+)/.exec(e); return m ? +m[1] : 99; };
 const fmtQtd = (v, u) => u === 'm²' ? fmtNum(v, 0) + ' m²' : u === 'unid.' ? fmtNum(v, Number.isInteger(+v.toFixed(1)) ? 0 : 1) + ' unid.' : fmtNum(v, Number.isInteger(+v.toFixed(1)) ? 0 : 1) + (v === 1 ? ' iniciativa' : ' iniciativas');
 // fração executada: coluna % da planilha; sem valor, Concluído = 100% e demais = 0%
-const fracFisica = p => p.fisico != null ? p.fisico : p.situacao === 'Concluído' ? 1 : 0;
+const fracFisica = p => p.situacao === 'Concluído' ? 1 : p.situacao === 'Em execução' ? (p.fisico ?? 0) : 0;
 
 function unidadeKR(ps) {
   const m = ps.map(p => p.meta).filter(v => v > 0);
@@ -1564,7 +1563,7 @@ function renderMetas(d) {
   const sem = x => chave(x).replace(/s/g, '');
   const parecidos = lista => [...new Set(lista)].filter(x => !ni(x)).filter((x, _, a) => a.some(y => y !== x && (sem(y) === sem(x) || chave(y).slice(0, 10) === chave(x).slice(0, 10))));
   const pe = parecidos(TODOS.map(p => p.eixo)), po = parecidos(TODOS.map(p => p.objetivo));
-  $('met-nota').innerHTML = 'Concluído = execução física da coluna % da planilha (vazio: Concluído = 100%, demais = 0%), em m², unidades ou nº de iniciativas. Em andamento = parte ainda não executada das obras em execução e em licitação. Progresso do objetivo = média dos títulos de ação; do eixo = média dos objetivos. Barras: <span style="color:#1f9d3a">■</span> concluído · <span style="color:#1e63d6">■</span> em execução · <span style="color:#d89a0c">■</span> em licitação.' +
+  $('met-nota').innerHTML = 'Concluído = obras concluídas (100%) + execução física das obras em execução (coluna % da planilha); demais situações contam 0%. Em m², unidades ou nº de iniciativas. Em andamento = parte ainda não executada das obras em execução e em licitação. Progresso do objetivo = média dos títulos de ação; do eixo = média dos objetivos. Barras: <span style="color:#1f9d3a">■</span> concluído · <span style="color:#1e63d6">■</span> em execução · <span style="color:#d89a0c">■</span> em licitação.' +
     (pe.length || po.length ? ` <br>Atenção: nomes parecidos na planilha aparecem separados — ${[...pe, ...po].map(x => '“' + esc(x) + '”').join(', ')}.` : '');
 }
 
