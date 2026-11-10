@@ -126,7 +126,7 @@
 
   /* Situação */
   .situacao { display: flex; align-items: center; gap: .625rem; }
-  .situacao svg { flex: none; width: 14.375rem; height: 11.5rem; }
+  .situacao svg { flex: none; width: 16.875rem; height: 13.75rem; }
   .legenda { list-style: none; margin: 0; padding: 0; flex: 1; display: flex; flex-direction: column; gap: .1875rem; }
   .legenda li button {
     display: grid; grid-template-columns: .875rem 1fr auto; align-items: center; gap: .5rem; width: 100%;
@@ -548,7 +548,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-10 08:45';
+const VERSAO_PAINEL = '2026-11-10 09:09';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -847,20 +847,29 @@ function renderSituacao(d) {
   const total = d.length;
   const cx = 115, cy = 85, r = 56, sw = 22, C = 2 * Math.PI * r;
   let acc = 0, arcos = '', rotulos = '';
+  const postos = [];  // rótulos já posicionados, para afastar os que se sobrepõem
   for (const i of itens) {
     if (!i.n) continue;
     const frac = i.n / total;
     arcos += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${corDe(i.s)}" stroke-width="${sw}"
       stroke-dasharray="${frac * C} ${C}" stroke-dashoffset="${-acc * C}" transform="rotate(-90 ${cx} ${cy})"><title>${esc(i.s)}: ${i.n} (${fmtPct(frac)})</title></circle>`;
-    if (frac >= 0.05) {
-      const ang = (acc + frac / 2) * 2 * Math.PI - Math.PI / 2;
-      const rr = r + sw / 2 + 16;
-      const x = cx + rr * Math.cos(ang), y = cy + rr * Math.sin(ang);
-      rotulos += `<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${Math.cos(ang) > 0.3 ? 'start' : Math.cos(ang) < -0.3 ? 'end' : 'middle'}" font-size="13" font-weight="600" fill="#12203a">${fmtPct(frac)}</text>`;
+    const ang = (acc + frac / 2) * 2 * Math.PI - Math.PI / 2;
+    let rr = r + sw / 2 + 16, x, y;
+    for (let tent = 0; tent < 4; tent++) {  // fatia pequena colada em outra: empurra o rótulo para fora
+      x = cx + rr * Math.cos(ang); y = cy + rr * Math.sin(ang);
+      if (!postos.some(q => Math.abs(q.x - x) < 34 && Math.abs(q.y - y) < 14)) break;
+      rr += 13;
     }
+    postos.push({ x, y });
+    const ancora = Math.cos(ang) > 0.3 ? 'start' : Math.cos(ang) < -0.3 ? 'end' : 'middle';
+    if (rr > r + sw / 2 + 16) {  // rótulo afastado ganha um traço até a fatia
+      const r0 = r + sw / 2 + 2, r1 = rr - 7;
+      rotulos += `<line x1="${(cx + r0 * Math.cos(ang)).toFixed(1)}" y1="${(cy + r0 * Math.sin(ang)).toFixed(1)}" x2="${(cx + r1 * Math.cos(ang)).toFixed(1)}" y2="${(cy + r1 * Math.sin(ang)).toFixed(1)}" stroke="#94a3b8" stroke-width="1"/>`;
+    }
+    rotulos += `<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${ancora}" font-size="13" font-weight="600" fill="#12203a">${fmtPct(frac)}</text>`;
     acc += frac;
   }
-  const svg = `<svg viewBox="0 -6 230 184">${arcos}${rotulos}
+  const svg = `<svg viewBox="-20 -24 270 220">${arcos}${rotulos}
     <text x="${cx}" y="${cy + 2}" text-anchor="middle" font-size="26" font-weight="800" fill="#0f2a5c">${total}</text>
     <text x="${cx}" y="${cy + 21}" text-anchor="middle" font-size="14" fill="#12203a">Projetos</text></svg>`;
   const leg = itens.map(i => `<li><button data-sit="${esc(i.s)}" class="${filtros.sit && filtros.sit !== i.s ? 'off' : ''}" title="Clique para filtrar"><i style="background:${corDe(i.s)}"></i><span>${esc(i.s)}</span><b>${i.n}</b></button></li>`).join('');
