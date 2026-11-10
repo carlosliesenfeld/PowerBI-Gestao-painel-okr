@@ -312,6 +312,10 @@
   .em-definicao h2 { color: var(--navy-800); margin: 0 0 .5rem; }
 
   /* ---------- Conexão com a planilha ---------- */
+  .nova-versao { position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 1rem;
+    background: var(--navy-900); color: #fff; padding: .75rem 1rem .75rem 1.25rem; border-radius: .75rem; box-shadow: 0 .5rem 1.75rem rgba(0,0,0,.3); font-size: .95rem; max-width: calc(100% - 2rem); }
+  .nova-versao button { background: var(--ambar); color: var(--navy-900); border: 0; border-radius: .5rem; padding: .5rem .875rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .nova-versao button:hover { filter: brightness(1.08); }
   .sobrepor { position: fixed; inset: 0; background: rgba(11,31,69,.72); display: none; align-items: center; justify-content: center; z-index: 10; padding: 1rem; }
   .sobrepor.visivel { display: flex; }
   .conectar { background: #fff; border-radius: .875rem; padding: 1.75rem; max-width: 32.5rem; width: 100%; text-align: center; box-shadow: 0 1.25rem 3.75rem rgba(0,0,0,.3); }
@@ -514,6 +518,11 @@
   </main>
 </div>
 
+<div class="nova-versao" id="nova-versao" role="status" hidden>
+  <span>Há uma <b>nova versão</b> do painel.</span>
+  <button id="nova-versao-btn">Atualizar agora</button>
+</div>
+
 <div class="sobrepor" id="sobrepor">
   <div class="conectar">
     <h2>Conectar planilha</h2>
@@ -537,6 +546,10 @@
 /* =====================================================================
    Configuração
    ===================================================================== */
+// Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
+// o aviso de nova versão compara este valor com o do site publicado.
+const VERSAO_PAINEL = '2026-11-09 22:25';
+
 const CONFIG = {
   aba: 'Investimentos',
   arquivoPadrao: 'OKR - Gestão 25 - 28 (versao 09_11_2026).xlsx', // usado quando o painel é aberto por um servidor local (http)
@@ -1732,6 +1745,31 @@ window.painel = { carregar: (buf, nome) => carregar(buf, nome || 'planilha.xlsx'
     return mostrarConexao(h);
   }
   mostrarConexao();
+})();
+
+/* =====================================================================
+   Aviso de nova versão do painel (só no site publicado)
+   ===================================================================== */
+(function vigiarVersao() {
+  if (VERSAO_PAINEL === 'dev' || !location.protocol.startsWith('http')) return;
+  let avisado = false;
+  async function checar() {
+    if (avisado || document.hidden) return;
+    try {
+      const url = location.href.split('#')[0].split('?')[0] + '?versao=' + Date.now();  // fura o cache do navegador e do GitHub
+      const html = await (await fetch(url, { cache: 'no-store' })).text();
+      const m = /const VERSAO_PAINEL = '([^']+)'/.exec(html);
+      if (m && m[1] !== VERSAO_PAINEL) { avisado = true; $('nova-versao').hidden = false; }
+    } catch { /* sem rede: tenta de novo depois */ }
+  }
+  $('nova-versao-btn').addEventListener('click', async () => {
+    // baixa a página de novo (atualiza o cache do navegador) antes de recarregar
+    try { await fetch(location.href.split('#')[0], { cache: 'reload' }); } catch { /* recarrega mesmo assim */ }
+    location.reload();
+  });
+  setInterval(checar, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checar(); });
+  setTimeout(checar, 20 * 1000);
 })();
 </script>
 </body>
