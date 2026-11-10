@@ -548,7 +548,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-10 09:09';
+const VERSAO_PAINEL = '2026-11-10 09:15';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -1545,13 +1545,13 @@ function renderMetas(d) {
     const cor = ni(e.eixo) ? '#94a3b8' : corDoEixo(e.eixo, i);
     const conc = e.ps.filter(p => p.situacao === 'Concluído').length;
     const objs = e.objetivos.map(o => `<div class="objetivo">
-        <div class="obj-cab"><b>${ni(o.nome) ? '<span style="color:var(--texto-3)">Objetivo não informado</span>' : esc(o.nome)}</b><span>${isFinite(o.score) ? Math.round(o.score * 100) + '% concluído' : '—'}${o.andamento > 0 ? `<em>${Math.round(o.andamento * 100)}% em andamento</em>` : ''}</span></div>
+        <div class="obj-cab"><b>${ni(o.nome) ? '<span style="color:var(--texto-3)">Objetivo não informado</span>' : esc(o.nome)}</b><span>${isFinite(o.score) ? Math.round(o.score * 100) + '% concluído' : '—'}${isFinite(o.andamento) ? `<em>${Math.round(o.andamento * 100)}% em andamento</em>` : ''}</span></div>
         <small>${o.ps.length} iniciativa(s) · ${fmtMi(o.proj)}</small>
         ${o.krs.map(krHtml).join('')}
       </div>`).join('');
     return `<div class="card obj" style="--cor-eixo:${cor}">
       <div class="obj-topo">${anel(e.score, cor)}<div><h2>${esc(e.eixo)}</h2>
-        <div class="meta-info"><b>${isFinite(e.score) ? Math.round(e.score * 100) + '% concluído' : '—'}</b>${e.andamento > 0 ? ` · ${Math.round(e.andamento * 100)}% em andamento` : ''} · ${e.objetivos.filter(o => !ni(o.nome)).length} objetivo(s) estratégico(s) · ${e.ps.length} iniciativas · ${conc} concluída(s) · ${fmtMi(e.proj)} projetados</div></div></div>
+        <div class="meta-info"><b>${isFinite(e.score) ? Math.round(e.score * 100) + '% concluído' : '—'}</b>${isFinite(e.andamento) ? ` · ${Math.round(e.andamento * 100)}% em andamento` : ''} · ${e.objetivos.filter(o => !ni(o.nome)).length} objetivo(s) estratégico(s) · ${e.ps.length} iniciativas · ${conc} concluída(s) · ${fmtMi(e.proj)} projetados</div></div></div>
       <div class="objs-grid">${objs}</div></div>`;
   }).join('') : '<div class="card vazio">Nenhuma iniciativa no filtro.</div>';
 
