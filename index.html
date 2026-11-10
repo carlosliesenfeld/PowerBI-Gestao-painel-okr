@@ -757,7 +757,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-10 12:22';
+const VERSAO_PAINEL = '2026-11-10 12:36';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -1033,24 +1033,58 @@ function lerHash() {
   if (tvInicial === null) tvInicial = Math.max(0, +q.get('tv') || 0);
   return pg;
 }
-function gravarHash() {
+// novo = cria uma entrada no histórico (troca de página pelo menu); senão, só atualiza a entrada atual
+function gravarHash(novo) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(filtros)) if (v) q.set(k, v);
   if (tv.ativo) q.set('tv', tv.seg);
   const s = q.toString();
-  history.replaceState(null, '', '#' + paginaAtual + (s ? '?' + s : ''));
+  const url = '#' + paginaAtual + (s ? '?' + s : '');
+  if (novo) history.pushState({ camadas: pilha.slice() }, '', url);
+  else history.replaceState(history.state, '', url);
 }
 
+/* Botão Voltar (do celular ou do navegador)
+   - Cada camada aberta por cima da página (detalhe do projeto, modo apresentação, tela de conexão) cria uma
+     entrada no histórico; Voltar fecha a camada em vez de sair do painel.
+   - Trocar de página pelo menu também cria uma entrada; Voltar retorna à página anterior.
+   - Filtros não criam entrada (ficam na entrada da página). */
+const pilha = [];          // camadas abertas que têm entrada no histórico, na ordem em que abriram
+let tvSaiu = false;
+const FECHA_AGORA = { detalhe: () => fecharDetalheAgora(), tv: () => sairApresentacaoAgora(), conexao: () => $('sobrepor').classList.remove('visivel') };
+function abrirCamada(nome) {
+  if (pilha.includes(nome)) return;
+  pilha.push(nome);
+  history.pushState({ camadas: pilha.slice() }, '', location.href);
+}
+function tirarDaPilha() { const c = pilha.pop(); FECHA_AGORA[c](); if (c === 'tv') tvSaiu = true; }
+// Fechar pela interface (×, Esc, botão Sair…): fecha e desfaz a entrada do histórico
+function fecharCamada(nome) {
+  const i = pilha.indexOf(nome);
+  if (i < 0) return FECHA_AGORA[nome]();           // camada aberta sem entrada (ex.: apresentação iniciada pelo endereço)
+  const n = pilha.length - i;
+  while (pilha.length > i) tirarDaPilha();          // fecha também o que estiver por cima dela
+  history.go(-n);
+}
+window.addEventListener('popstate', () => {
+  const alvo = (history.state && history.state.camadas) || [];
+  if (alvo.length > pilha.length) return history.back();   // entrada de uma camada que já foi fechada (botão Avançar): pula
+  while (pilha.length > alvo.length) tirarDaPilha();
+  if (tvSaiu) { tvSaiu = false; gravarHash(); }             // ao sair da apresentação, fica na página que estava na tela
+});
+if (history.state && history.state.camadas) history.replaceState(null, '', location.href);   // página recarregada com camada aberta
+
 $('menu').innerHTML = PAGINAS.map(p => `<li><button data-pg="${p.id}" class="${p.id === 'resumo' ? 'ativo' : ''}">${ICONES[p.icone]}<span>${p.rotulo}</span></button></li>`).join('');
-function irPara(id) {
+function irPara(id, novo) {
   const pg = PAGINAS.find(p => p.id === id) || PAGINAS[0];
+  const mudou = pg.id !== paginaAtual;
   paginaAtual = pg.id;
   document.querySelectorAll('#menu button').forEach(x => x.classList.toggle('ativo', x.dataset.pg === pg.id));
   for (const p of PAGINAS) $('pagina-' + p.id).hidden = pg.id !== p.id;
-  gravarHash();
+  gravarHash(novo && mudou);
   window.scrollTo(0, 0);
 }
-$('menu').addEventListener('click', e => { const b = e.target.closest('button'); if (b) irPara(b.dataset.pg); });
+$('menu').addEventListener('click', e => { const b = e.target.closest('button'); if (b) irPara(b.dataset.pg, true); });
 irPara(lerHash());
 window.addEventListener('hashchange', () => {
   const pg = lerHash();
@@ -1109,7 +1143,7 @@ window.addEventListener('beforeprint', () => {
   $('impresso').textContent = `${pg} · ${TODOS.length ? filtrados().length + ' de ' + TODOS.length + ' projetos · ' : ''}gerado em ${new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`;
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') return $('gaveta').classList.contains('aberta') ? fecharDetalhe() : sairApresentacao();
+  if (e.key === 'Escape') return $('gaveta').classList.contains('aberta') ? fecharDetalhe() : pilha.includes('conexao') ? fecharCamada('conexao') : sairApresentacao();
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[data-f]:not(button), [data-pid]')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
 });
 
@@ -2050,7 +2084,7 @@ function iniciarApresentacao(seg, telaCheia, parado) {
   if (seg) tv.seg = seg;
   if (![...$('tv-seg').options].some(o => +o.value === tv.seg)) $('tv-seg').add(new Option(tv.seg + ' s', tv.seg));
   $('tv-seg').value = String(tv.seg);
-  fecharDetalhe();
+  if (telaCheia) abrirCamada('tv');   // aberta pelo botão: Voltar sai da apresentação
   document.body.classList.add('apresentando');
   $('tv-barra').hidden = $('tv-progresso').hidden = false;
   if (telaCheia && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().then(() => { tv.cheia = true; }).catch(() => { /* sem tela cheia: apresenta na janela */ });
@@ -2059,7 +2093,8 @@ function iniciarApresentacao(seg, telaCheia, parado) {
   cancelAnimationFrame(tv.raf);
   tv.raf = requestAnimationFrame(passoTv);
 }
-function sairApresentacao() {
+function sairApresentacao() { if (tv.ativo) fecharCamada('tv'); }
+function sairApresentacaoAgora() {
   if (!tv.ativo) return;
   tv.ativo = false;
   cancelAnimationFrame(tv.raf); clearTimeout(tv.ocioso);
@@ -2192,14 +2227,15 @@ function abrirDetalhe(id, origemFoco) {
       </dl></section>
       <section><h3>Pendências de cadastro</h3>${pend.length ? pend.map(c => `<span class="chip">${esc(c.r)}</span>`).join('') : '<span class="gav-ok">✓ Cadastro completo</span>'}</section>
     </div>`;
-  if (!$('gaveta').classList.contains('aberta')) focoAntes = origemFoco || document.activeElement;
+  if (!$('gaveta').classList.contains('aberta')) { focoAntes = origemFoco || document.activeElement; abrirCamada('detalhe'); }
   $('gaveta').inert = false;
   $('gaveta').classList.add('aberta');
   $('gaveta-fundo').classList.add('aberta');
   $('gav-fechar').onclick = fecharDetalhe;
   $('gav-fechar').focus({ preventScroll: true });
 }
-function fecharDetalhe() {
+function fecharDetalhe() { if ($('gaveta').classList.contains('aberta')) fecharCamada('detalhe'); }
+function fecharDetalheAgora() {
   if (!$('gaveta').classList.contains('aberta')) return;
   $('gaveta').classList.remove('aberta');
   $('gaveta-fundo').classList.remove('aberta');
@@ -2277,7 +2313,7 @@ function carregar(buf, nome, versao) {
   fecharDetalhe();
   montarFiltros();
   renderizar();
-  $('sobrepor').classList.remove('visivel');
+  fecharCamada('conexao');
   statusOk(nome);
 }
 function statusOk(nome) {
@@ -2350,7 +2386,9 @@ function mostrarConexao(handleSalvo) {
   rb.hidden = !handleSalvo;
   if (handleSalvo) rb.textContent = `Reabrir “${handleSalvo.name}”`;
   $('sobrepor').classList.add('visivel');
+  if (TODOS.length) abrirCamada('conexao');   // já há dados na tela: Voltar (ou Esc, ou clicar fora) cancela a troca de fonte
 }
+$('sobrepor').addEventListener('click', e => { if (e.target === $('sobrepor') && pilha.includes('conexao')) fecharCamada('conexao'); });
 
 async function usarHandle(h) {
   handle = h; origem = 'arquivo';
