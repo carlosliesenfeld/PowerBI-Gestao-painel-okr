@@ -47,7 +47,7 @@
   /* ---------- Cabeçalho ---------- */
   .topo {
     display: flex; align-items: center; gap: 1.75rem;
-    grid-column: 2; grid-row: 1; position: relative;
+    grid-column: 2; grid-row: 1; position: sticky; top: 0; z-index: 5;
     padding: .375rem 1.5rem .375rem 1.75rem; min-height: 6.125rem; color: #fff;
     background:
       linear-gradient(90deg, rgba(11,31,69,.98) 0%, rgba(11,31,69,.93) 55%, rgba(11,31,69,.55) 100%),
@@ -63,10 +63,25 @@
   .titulo h1 { margin: 0; font-size: 2.25rem; font-weight: 800; letter-spacing: -.3px; line-height: 1.05; }
   .titulo p { margin: .25rem 0 0; font-size: 1.1875rem; opacity: .92; }
   .titulo p.municipio { margin-top: .375rem; font-size: 1.0625rem; font-weight: 600; opacity: 1; }
-  .filtros { margin-left: auto; display: flex; gap: 1.125rem; flex-wrap: wrap; }
+  /* cabeçalho fixo: título e filtros numa linha só, para não crescer em janelas estreitas (os filtros encolhem) */
+  .titulo { flex: none; }
+  .titulo h1, .titulo p { white-space: nowrap; }
+  .filtros-bloco { margin-left: auto; flex: 0 1 50rem; display: flex; flex-direction: column; align-items: flex-end; gap: .375rem; min-width: 0; }
+  .filtros { display: flex; gap: 1.125rem; justify-content: flex-end; width: 100%; }
+  .filtro { flex: 0 1 11.25rem; min-width: 5rem; }
+  .filtro label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* etiquetas dos filtros ativos (inclui os aplicados por clique nos gráficos) */
+  .ativos { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .375rem; max-width: 52rem; }
+  .ativos .tag { display: inline-flex; align-items: center; gap: .375rem; max-width: 22rem; border: 0; border-radius: 1rem; cursor: pointer;
+    background: var(--ambar); color: var(--navy-900); padding: .125rem .5rem .125rem .625rem; font-size: max(11px, .8125rem); font-weight: 600; }
+  .ativos .tag span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ativos .tag:hover { filter: brightness(1.1); }
+  .ativos .tag b { font-size: 1.2em; line-height: 1; }
+  .ativos .tag.limpar { background: #fff; color: var(--navy-900); font-weight: 700; padding: .1875rem .75rem; box-shadow: 0 1px .25rem rgba(0,0,0,.25); }
+  .ativos .tag.limpar:hover { background: #e3ecfb; filter: none; }
   .filtro label { display: block; font-size: .9375rem; font-weight: 600; margin-bottom: .375rem; }
   .filtro select {
-    width: 11.25rem; height: 2.125rem; padding: 0 1.875rem 0 .75rem; border: 0; border-radius: .3125rem;
+    width: 100%; height: 2.125rem; padding: 0 1.875rem 0 .75rem; border: 0; border-radius: .3125rem;
     background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2312203a' stroke-width='2'/%3E%3C/svg%3E") no-repeat right .625rem center;
     appearance: none; color: var(--texto); cursor: pointer; font-size: .9375rem;
   }
@@ -75,7 +90,16 @@
   /* ---------- Estrutura ---------- */
   .corpo { display: grid; grid-template-columns: 14.125rem 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
   .corpo > * { min-width: 0; }
-  .lateral { grid-column: 1; grid-row: 1 / span 2; background: linear-gradient(180deg, var(--navy-900), var(--navy-800)); padding: .75rem .625rem 1.375rem; color: #fff; display: flex; flex-direction: column; }
+  .lateral { grid-column: 1; grid-row: 1 / span 2; background: linear-gradient(180deg, var(--navy-900), var(--navy-800)); padding: .75rem .625rem 1rem; color: #fff; display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; align-self: start; overflow-y: auto; }
+  .versao { margin-top: auto; padding-top: .75rem; text-align: center; font-size: max(11px, .75rem); color: rgba(255,255,255,.6); }
+  :focus-visible { outline: 2px solid var(--ambar); outline-offset: 1px; }
+  /* tudo que filtra (data-f) ou abre o detalhe do projeto (data-pid) é clicável */
+  [data-f], [data-pid] { cursor: pointer; }
+  .kpi[data-f]:hover, svg [data-f]:hover { filter: brightness(1.1); }
+  tbody tr[data-pid]:hover td { background: #e3ecfb; }
+  .secs [data-pid]:hover, .pilhas [data-f]:hover { filter: brightness(1.08); }
+  h2[data-f]:hover, .obj-cab b[data-f]:hover, .matriz td[data-f]:hover { text-decoration: underline; }
   .menu { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .375rem; }
   .menu button {
     width: 100%; display: flex; align-items: center; gap: .875rem; text-align: left;
@@ -87,11 +111,11 @@
   .menu svg { width: 2rem; height: 2rem; flex: none; }
   .fonte {
     margin-top: 1.25rem; padding: .75rem; border-radius: .5rem; background: rgba(255,255,255,.07);
-    font-size: .75rem; line-height: 1.45; color: rgba(255,255,255,.85); word-break: break-word;
+    font-size: max(11px, .75rem); line-height: 1.45; color: rgba(255,255,255,.85); word-break: break-word;
   }
   .fonte b { color: #fff; }
   .fonte .acoes { display: flex; gap: .375rem; margin-top: .5rem; flex-wrap: wrap; }
-  .fonte button { border: 1px solid rgba(255,255,255,.35); background: none; color: #fff; padding: .25rem .625rem; border-radius: .375rem; cursor: pointer; font-size: .75rem; }
+  .fonte button { border: 1px solid rgba(255,255,255,.35); background: none; color: #fff; padding: .25rem .625rem; border-radius: .375rem; cursor: pointer; font-size: max(11px, .75rem); }
   .fonte button:hover { background: rgba(255,255,255,.12); }
   .fonte .ok { color: #7ee2a0; }
   .fonte .aviso { color: #ffd166; }
@@ -105,14 +129,22 @@
   .kpi svg { width: clamp(2rem, 2.6vw, 3.125rem); height: clamp(2rem, 2.6vw, 3.125rem); flex: none; }
   .kpi .rot { font-size: clamp(.75rem, .85vw, .9375rem); opacity: .95; line-height: 1.2; }
   .kpi .val { font-size: clamp(1.125rem, 1.45vw, 1.75rem); font-weight: 700; line-height: 1.15; white-space: nowrap; }
-  .kpi .sub { font-size: clamp(.6875rem, .8vw, .875rem); opacity: .92; }
-  .kpi.k1 { background: linear-gradient(135deg, #123a85, #0d2c69); }
-  .kpi.k1 .val { font-size: clamp(1.25rem, 1.65vw, 2rem); }
-  .kpi.k2 { background: linear-gradient(135deg, #1d9a3c, #157a2e); }
-  .kpi.k3 { background: linear-gradient(135deg, #f0b323, #d89a0c); }
-  .kpi.k4 { background: linear-gradient(135deg, #16a594, #0f8578); }
-  .kpi.k5 { background: linear-gradient(135deg, #8e4fd9, #6d36b8); }
-  .kpi.k6 { background: linear-gradient(135deg, #5d6b80, #465366); }
+  .kpi .sub { font-size: clamp(max(11px, .6875rem), .8vw, .875rem); opacity: .92; }
+  .kpis .kpi:first-child .val { font-size: clamp(1.25rem, 1.65vw, 2rem); }
+  /* Cores dos cartões — cada uma com um significado só:
+     kn/kn2/kc = neutros (totais, tempos, outros) · kf1–kf3 = fonte do recurso (tons de verde-água)
+     ks-* = situação do projeto (mesmas cores da rosca) · kal = alerta */
+  .kpi.kn  { background: linear-gradient(135deg, #123a85, #0d2c69); }
+  .kpi.kn2 { background: linear-gradient(135deg, #41609f, #2f4a82); }
+  .kpi.kc  { background: linear-gradient(135deg, #5d6b80, #465366); }
+  .kpi.kf1 { background: linear-gradient(135deg, #0e6373, #0a4a57); }
+  .kpi.kf2 { background: linear-gradient(135deg, #18a0aa, #11828b); }
+  .kpi.kf3 { background: linear-gradient(135deg, #7fd6d1, #5cc4c0); color: var(--navy-900); }
+  .kpi.ks-concl  { background: linear-gradient(135deg, #1d9a3c, #157a2e); }
+  .kpi.ks-exec   { background: linear-gradient(135deg, #2a6fe0, #1a52b8); }
+  .kpi.ks-lic    { background: linear-gradient(135deg, #f0b323, #d89a0c); }
+  .kpi.ks-aguard { background: linear-gradient(135deg, #e04848, #b92f2f); }
+  .kpi.kal { background: linear-gradient(135deg, #f97316, #d4580b); }
 
   /* ---------- Cards ---------- */
   .linha { display: grid; gap: .875rem; }
@@ -161,7 +193,7 @@
   .evo-leg i { width: 1.375rem; height: .1875rem; display: inline-block; position: relative; }
   .evo-leg i::after { content: ""; position: absolute; left: .375rem; top: -3.5px; width: .625rem; height: .625rem; border-radius: 50%; background: inherit; }
   #evolucao svg { width: 100%; height: auto; display: block; }
-  .nota { font-size: .75rem; color: var(--texto-3); margin-top: .25rem; }
+  .nota { font-size: max(11px, .75rem); color: var(--texto-3); margin-top: .25rem; }
 
   /* Secretaria */
   .secs { display: grid; grid-template-columns: auto 1fr; column-gap: .625rem; row-gap: .5625rem; align-items: center; margin-top: .625rem; }
@@ -174,29 +206,30 @@
 
   /* Tabela */
   .tab-topo { display: flex; align-items: center; justify-content: space-between; gap: .625rem; }
-  .busca { border: 1px solid var(--borda); border-radius: .375rem; padding: .3125rem .625rem; width: 13.75rem; font-size: .8125rem; }
+  .tab-acoes { display: flex; align-items: center; gap: .5rem; }
+  .btn.mini { padding: .3125rem .625rem; font-size: max(11px, .8125rem); white-space: nowrap; }
+  .busca { border: 1px solid var(--borda); border-radius: .375rem; padding: .3125rem .625rem; width: 13.75rem; font-size: max(11px, .8125rem); }
   .tabela-wrap { max-height: 13.375rem; overflow: auto; border-radius: .375rem; }
-  table { width: 100%; border-collapse: collapse; font-size: .8125rem; }
+  table { width: 100%; border-collapse: collapse; font-size: max(11px, .8125rem); }
   thead th {
     position: sticky; top: 0; z-index: 1; background: var(--navy-800); color: #fff; font-weight: 600;
     padding: .375rem .5rem; text-align: left; white-space: nowrap; cursor: pointer; user-select: none;
   }
   thead th.num { text-align: right; }
-  thead th .seta { opacity: .7; font-size: .6875rem; margin-left: .25rem; }
+  thead th .seta { opacity: .7; font-size: max(11px, .6875rem); margin-left: .25rem; }
   tbody td { padding: .25rem .5rem; border-bottom: 1px solid #e8edf4; white-space: nowrap; }
   tbody tr:nth-child(even) td { background: #f7f9fc; }
   td.proj { white-space: normal; width: 100%; min-width: 8.75rem; max-width: 0; }
   td.proj b, td.proj small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   td.proj b { font-weight: 600; }
-  td.proj small { color: var(--texto-3); font-size: .7188rem; }
+  td.proj small { color: var(--texto-3); font-size: max(11px, .7188rem); }
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
   td.cen { text-align: center; }
-  .pilula { display: inline-block; min-width: 5.25rem; max-width: 6.25rem; white-space: normal; line-height: 1.2; text-align: center; color: #fff; border-radius: .25rem; padding: 2px .375rem; font-size: .7812rem; }
+  .pilula { display: inline-block; min-width: 5.25rem; max-width: 6.25rem; white-space: normal; line-height: 1.2; text-align: center; color: #fff; border-radius: .25rem; padding: 2px .375rem; font-size: max(11px, .7812rem); }
   .avanco { display: inline-flex; align-items: center; gap: .375rem; }
   .avanco .mini { width: 2.75rem; height: .6875rem; background: #e3e8f0; border-radius: 2px; overflow: hidden; }
   .avanco .mini span { display: block; height: 100%; background: var(--verde); }
   .avanco em { font-style: normal; width: 2.25rem; text-align: right; }
-  .avanco.est .mini span { background: #9aa6b8; }
   .avanco.est em { color: var(--texto-3); }
 
   /* OKRs */
@@ -206,7 +239,7 @@
   .okr .v { font-size: clamp(1.25rem, 1.6vw, 1.875rem); font-weight: 800; color: var(--navy-800); line-height: 1.25; margin-top: .25rem; white-space: nowrap; }
   .okr .v.alerta { color: #c62828; }
   .okr .r { font-size: .875rem; color: var(--texto-2); line-height: 1.25; }
-  .okr .n { font-size: .6875rem; color: var(--texto-3); margin-top: .25rem; }
+  .okr .n { font-size: max(11px, .6875rem); color: var(--texto-3); margin-top: .25rem; }
 
   .info { display: inline-flex; width: .9375rem; height: .9375rem; border-radius: 50%; background: #dbe3ef; color: var(--texto-2); font-size: .625rem; font-weight: 700; align-items: center; justify-content: center; cursor: help; vertical-align: middle; margin-left: .25rem; }
 
@@ -220,12 +253,12 @@
     padding: 0 .875rem; font-size: .9375rem; min-width: 46%; white-space: nowrap; gap: .625rem;
   }
   .funil .etapa b { font-size: 1.25rem; }
-  .funil .conv { text-align: center; font-size: .75rem; color: var(--texto-3); }
+  .funil .conv { text-align: center; font-size: max(11px, .75rem); color: var(--texto-3); }
   .tempos { margin-top: .875rem; border-top: 1px solid var(--borda); padding-top: .625rem; }
   .tempos h3 { margin: 0 0 .375rem; font-size: .875rem; color: var(--navy-800); }
   .tempos div { display: flex; justify-content: space-between; font-size: .875rem; padding: .1875rem 0; }
   .tempos b { font-variant-numeric: tabular-nums; }
-  .gantt-leg { display: flex; flex-wrap: wrap; gap: .375rem 1rem; font-size: .7812rem; color: var(--texto-2); margin-bottom: .375rem; }
+  .gantt-leg { display: flex; flex-wrap: wrap; gap: .375rem 1rem; font-size: max(11px, .7812rem); color: var(--texto-2); margin-bottom: .375rem; }
   .gantt-leg span { display: inline-flex; align-items: center; gap: .375rem; }
   .gantt-leg i { width: 1.125rem; height: .625rem; border-radius: 2px; display: inline-block; }
   .gantt-leg i.listrado { background: repeating-linear-gradient(135deg, #9cc0f5 0 .25rem, #dbe8fc .25rem .5rem); }
@@ -237,8 +270,8 @@
   /* Investimentos e Captação */
   .l-inv { grid-template-columns: 1fr 1fr; }
   .comp.fina { height: 2.125rem; margin: .5rem 0 .5rem; }
-  .comp.fina span { font-size: .8125rem; }
-  .fontes-leg { display: flex; flex-wrap: wrap; gap: .25rem 1rem; font-size: .7812rem; color: var(--texto-2); margin-bottom: .375rem; }
+  .comp.fina span { font-size: max(11px, .8125rem); }
+  .fontes-leg { display: flex; flex-wrap: wrap; gap: .25rem 1rem; font-size: max(11px, .7812rem); color: var(--texto-2); margin-bottom: .375rem; }
   .fontes-leg span { display: inline-flex; align-items: center; gap: .375rem; }
   .fontes-leg i { width: .75rem; height: .75rem; border-radius: .1875rem; display: inline-block; }
   .fontes-leg b { color: var(--texto); font-weight: 600; }
@@ -248,16 +281,15 @@
   .pilhas .linha-p { display: flex; align-items: center; gap: .5rem; min-width: 0; }
   .pilhas .pilha { display: flex; height: 1.375rem; border-radius: .1875rem; overflow: hidden; flex: none; }
   .pilhas .pilha span { height: 100%; }
-  .pilhas em { font-style: normal; font-size: .8438rem; white-space: nowrap; }
+  .pilhas em { font-style: normal; font-size: max(11px, .8438rem); white-space: nowrap; }
   .eco-resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .625rem; margin: .375rem 0 .75rem; }
   .eco-resumo div { background: #f4f7fb; border-radius: .5rem; padding: .5rem .625rem; }
-  .eco-resumo small { display: block; color: var(--texto-2); font-size: .7812rem; }
+  .eco-resumo small { display: block; color: var(--texto-2); font-size: max(11px, .7812rem); }
   .eco-resumo b { font-size: 1.1875rem; color: var(--navy-800); white-space: nowrap; }
   .eco-resumo .destaque b { color: var(--verde); }
   .secs .neg em { color: #c62828; font-weight: 600; }
 
   /* Prazos e Pendências */
-  .kpi.k7 { background: linear-gradient(135deg, #e04848, #b92f2f); }
   .l-prz1 { grid-template-columns: 1.7fr 1fr; }
   .rolagem { max-height: 20.625rem; overflow: auto; padding-right: .25rem; }
   .histo { display: flex; align-items: flex-end; gap: .75rem; height: 11.875rem; padding: .625rem .25rem 0; border-bottom: 1px solid var(--borda); }
@@ -265,7 +297,7 @@
   .histo b { font-size: 1.0625rem; color: var(--navy-800); margin-bottom: .25rem; }
   .histo span { width: 100%; border-radius: .25rem .25rem 0 0; min-height: 2px; }
   .histo-rot { display: flex; gap: .75rem; padding: .375rem .25rem 0; }
-  .histo-rot div { flex: 1; text-align: center; font-size: .7812rem; color: var(--texto-2); }
+  .histo-rot div { flex: 1; text-align: center; font-size: max(11px, .7812rem); color: var(--texto-2); }
   .checks { list-style: none; margin: .375rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
   .checks button {
     width: 100%; display: grid; grid-template-columns: 1.25rem 1fr auto; align-items: center; gap: .625rem; text-align: left;
@@ -275,9 +307,9 @@
   .checks button.sel { background: #e8f0fe; box-shadow: inset .1875rem 0 0 var(--azul); }
   .checks button[disabled] { cursor: default; color: var(--texto-3); }
   .checks button[disabled]:hover { background: none; }
-  .checks .q { min-width: 2.125rem; text-align: center; border-radius: .625rem; padding: 1px .5rem; font-weight: 700; font-size: .8125rem; background: #fde8e8; color: #b42323; }
+  .checks .q { min-width: 2.125rem; text-align: center; border-radius: .625rem; padding: 1px .5rem; font-weight: 700; font-size: max(11px, .8125rem); background: #fde8e8; color: #b42323; }
   .checks .q.zero { background: #e3f5e8; color: #1a7f33; }
-  .chip { display: inline-block; background: #fdecec; color: #a12626; border-radius: .625rem; padding: 1px .5rem; font-size: .7188rem; margin: 1px .25rem 1px 0; white-space: nowrap; }
+  .chip { display: inline-block; background: #fdecec; color: #a12626; border-radius: .625rem; padding: 1px .5rem; font-size: max(11px, .7188rem); margin: 1px .25rem 1px 0; white-space: nowrap; }
   .tabela-wrap td.chips { white-space: normal; min-width: 16.25rem; }
   .total-linha { display: flex; justify-content: space-between; border-top: 1px solid var(--borda); margin-top: .5rem; padding-top: .5rem; font-size: .875rem; }
 
@@ -287,8 +319,8 @@
   .objetivo { border: 1px solid var(--borda); border-left: .25rem solid var(--cor-eixo, var(--azul)); border-radius: .5rem; padding: .625rem .875rem .375rem; min-width: 0; }
   .obj-cab { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; font-size: 1rem; color: var(--navy-800); }
   .obj-cab span { font-weight: 800; color: var(--cor-eixo, var(--azul)); text-align: right; white-space: nowrap; font-size: .875rem; }
-  .obj-cab span em { display: block; font-style: normal; font-weight: 600; font-size: .75rem; color: var(--azul); }
-  .objetivo > small { display: block; color: var(--texto-3); font-size: .75rem; margin-bottom: .25rem; }
+  .obj-cab span em { display: block; font-style: normal; font-weight: 600; font-size: max(11px, .75rem); color: var(--azul); }
+  .objetivo > small { display: block; color: var(--texto-3); font-size: max(11px, .75rem); margin-bottom: .25rem; }
   .objetivo .kr { grid-template-columns: 1fr; gap: .25rem; }
   .matriz tr.grupo td { background: #eef2f8 !important; }
   .matriz td.sub { padding-left: 1.5rem; }
@@ -296,20 +328,84 @@
   .obj-topo { display: flex; align-items: center; gap: .875rem; margin-bottom: .625rem; }
   .obj-topo svg { width: 4.625rem; height: 4.625rem; flex: none; }
   .obj-topo h2 { margin: 0; }
-  .obj-topo .meta-info { font-size: .8438rem; color: var(--texto-2); margin-top: 2px; }
+  .obj-topo .meta-info { font-size: max(11px, .8438rem); color: var(--texto-2); margin-top: 2px; }
   .kr { display: grid; grid-template-columns: minmax(9.375rem, 1fr) 1.4fr; gap: .25rem .875rem; align-items: center; padding: .4375rem 0; border-top: 1px solid #eef2f7; }
   .kr .nome { font-size: .875rem; font-weight: 600; }
-  .kr .nome small { display: block; font-weight: 400; color: var(--texto-3); font-size: .75rem; }
+  .kr .nome small { display: block; font-weight: 400; color: var(--texto-3); font-size: max(11px, .75rem); }
   .kr .prog { display: flex; height: .875rem; border-radius: .4375rem; overflow: hidden; background: #e6ebf2; }
   .kr .prog span { height: 100%; }
-  .kr .num { font-size: .7812rem; color: var(--texto-2); margin-top: .1875rem; display: flex; justify-content: space-between; gap: .5rem; }
+  .kr .num { font-size: max(11px, .7812rem); color: var(--texto-2); margin-top: .1875rem; display: flex; justify-content: space-between; gap: .5rem; }
   .kr .num b { color: var(--texto); }
   .matriz td.cel { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
   .matriz td.cel.zero { color: #c3ccda; font-weight: 400; }
 
-  /* Páginas em definição */
-  .em-definicao { background: var(--card); border: 1px dashed #b8c4d8; border-radius: var(--raio); padding: 2.5rem; text-align: center; color: var(--texto-2); }
-  .em-definicao h2 { color: var(--navy-800); margin: 0 0 .5rem; }
+  /* ---------- Metas: recolher eixo e listar iniciativas ---------- */
+  .chev { display: inline-block; transition: transform .15s; }
+  [aria-expanded="true"] > .chev { transform: rotate(90deg); }
+  .obj-topo > div { flex: 1; min-width: 0; }
+  .obj-topo:has(+ .objs-grid[hidden]) { margin-bottom: 0; }
+  .recolher { flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%; border: 1px solid var(--borda); background: #fff; color: var(--navy-800); font-size: 1.125rem; cursor: pointer; }
+  .recolher:hover { background: #f1f5fb; }
+  .ver-inis { display: block; border: 0; background: none; padding: .125rem 0; cursor: pointer; text-align: left; font-weight: 400; color: var(--texto-2); font-size: max(11px, .75rem); }
+  .ver-inis:hover { color: var(--azul); text-decoration: underline; }
+  .inis { list-style: none; margin: .25rem 0 .125rem; padding: 0; border-left: 2px solid var(--borda); }
+  .inis li { display: grid; grid-template-columns: .625rem 1fr auto; align-items: center; gap: .5rem; padding: .25rem .5rem; border-radius: .25rem; font-size: max(11px, .8125rem); }
+  .inis li:hover { background: #e3ecfb; }
+  .inis li i { width: .625rem; height: .625rem; border-radius: 50%; }
+  .inis li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .inis li em { font-style: normal; color: var(--texto-2); white-space: nowrap; }
+
+  /* ---------- Animações de entrada (a cada filtro aplicado) ---------- */
+  @keyframes abrir { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes subir { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes surgir { from { opacity: 0; } }
+  .secs .trilho > span, .barra > span, .comp, .pilhas .pilha, .kr .prog, .funil .etapa > div { animation: abrir .45s ease-out; }
+  .histo span { animation: subir .45s ease-out; }
+  #situacao svg, #evolucao svg, #inv-ano svg, .obj-topo svg { animation: surgir .45s ease-out; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  .imprimir { margin-top: .625rem; width: 100%; border: 1px solid rgba(255,255,255,.35); background: none; color: #fff; padding: .4375rem .625rem; border-radius: .375rem; cursor: pointer; font-size: max(11px, .8125rem); }
+  .imprimir:hover { background: rgba(255,255,255,.12); }
+  .so-impressao { display: none; }
+
+  /* ---------- Dica (substitui o title; funciona com mouse e toque) ---------- */
+  .dica { position: fixed; z-index: 30; left: 0; top: 0; max-width: 24rem; pointer-events: none; white-space: pre-line;
+    background: var(--navy-900); color: #fff; padding: .5rem .625rem; border-radius: .375rem; font-size: max(12px, .8125rem); line-height: 1.4;
+    box-shadow: 0 .25rem 1rem rgba(0,0,0,.3); }
+
+  /* ---------- Detalhe do projeto (painel lateral) ---------- */
+  .gaveta-fundo { position: fixed; inset: 0; z-index: 14; background: rgba(11,31,69,.45); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .gaveta-fundo.aberta { opacity: 1; pointer-events: auto; }
+  .gaveta { position: fixed; top: 0; right: 0; bottom: 0; z-index: 15; width: min(36rem, 100%); background: #fff; display: flex; flex-direction: column;
+    box-shadow: -.5rem 0 2rem rgba(0,0,0,.25); transform: translateX(105%); transition: transform .22s ease; }
+  .gaveta.aberta { transform: none; }
+  .gav-topo { background: linear-gradient(135deg, var(--navy-900), var(--navy-700)); color: #fff; padding: 1rem 1.25rem; display: flex; gap: .75rem; align-items: flex-start; }
+  .gav-topo h2 { margin: .375rem 0 0; font-size: 1.25rem; line-height: 1.25; }
+  .gav-topo > div { flex: 1; min-width: 0; }
+  .gav-fechar { flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; font-size: 1.375rem; line-height: 1; cursor: pointer; }
+  .gav-fechar:hover { background: rgba(255,255,255,.28); }
+  .gav-corpo { flex: 1; overflow-y: auto; padding: 1rem 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1.125rem; }
+  .gav-corpo h3 { margin: 0 0 .5rem; font-size: .875rem; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-3); }
+  .gav-desc { margin: 0; white-space: pre-line; line-height: 1.5; font-size: .9375rem; }
+  .gav-val { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+  .gav-val div { background: #f4f7fb; border-radius: .5rem; padding: .5rem .625rem; min-width: 0; }
+  .gav-val small { display: block; color: var(--texto-2); font-size: max(11px, .7812rem); }
+  .gav-val b { font-size: 1rem; color: var(--navy-800); white-space: nowrap; }
+  .gav-val .pos b { color: var(--verde); } .gav-val .neg b { color: #c62828; }
+  .gav-lista { display: grid; grid-template-columns: auto 1fr; gap: .3125rem .875rem; margin: 0; font-size: .9375rem; }
+  .gav-lista dt { color: var(--texto-2); } .gav-lista dd { margin: 0; font-weight: 600; }
+  .marcos { list-style: none; margin: 0; padding: 0; }
+  .marcos li { display: grid; grid-template-columns: 1.25rem 1fr auto; gap: .625rem; align-items: center; padding: .3125rem 0; position: relative; font-size: .9375rem; color: var(--texto-3); }
+  .marcos li i { width: .875rem; height: .875rem; border-radius: 50%; border: 2px solid var(--cinza-claro); background: #fff; justify-self: center; z-index: 1; }
+  .marcos li:not(:last-child)::after { content: ""; position: absolute; left: .5625rem; top: 1.25rem; bottom: -.75rem; border-left: 2px solid var(--cinza-claro); }
+  .marcos li.feito { color: var(--texto); } .marcos li.feito i { background: var(--azul); border-color: var(--azul); }
+  .marcos li.feito.ent i { background: var(--verde); border-color: var(--verde); }
+  .marcos li.hoje i { border-color: var(--vermelho); border-style: dashed; }
+  .marcos li em { font-style: normal; font-size: max(11px, .8125rem); color: var(--texto-2); }
+  .marcos li span b { font-weight: 600; margin-right: .5rem; }
+  .gav-fis { display: flex; align-items: center; gap: .75rem; }
+  .gav-fis .barra { flex: 1; height: 1rem; } .gav-fis b { font-size: 1.125rem; color: var(--navy-800); }
+  .gav-ok { color: #1a7f33; font-weight: 600; }
 
   /* ---------- Conexão com a planilha ---------- */
   .nova-versao { position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 1rem;
@@ -326,11 +422,11 @@
   .btn { background: var(--azul); color: #fff; border: 0; border-radius: .5rem; padding: .625rem 1.125rem; font-weight: 600; cursor: pointer; font-size: .9375rem; }
   .btn:hover { background: #1853b6; }
   .btn.sec { background: #e9eef6; color: var(--navy-800); }
-  .conectar .erro { color: #c62828; font-size: .8125rem; min-height: 1.125rem; }
+  .conectar .erro { color: #c62828; font-size: max(11px, .8125rem); min-height: 1.125rem; }
   .via-web { margin-top: 1.125rem; padding-top: .875rem; border-top: 1px solid var(--borda); text-align: left; }
-  .via-web p { font-size: .8438rem; margin: 0 0 .5rem; }
+  .via-web p { font-size: max(11px, .8438rem); margin: 0 0 .5rem; }
   .linha-web { display: flex; gap: .5rem; }
-  .linha-web input { flex: 1; min-width: 0; border: 1px solid #b8c4d8; border-radius: .5rem; padding: .5rem .625rem; font-size: .8125rem; }
+  .linha-web input { flex: 1; min-width: 0; border: 1px solid #b8c4d8; border-radius: .5rem; padding: .5rem .625rem; font-size: max(11px, .8125rem); }
 
   /* ---------- Responsivo ---------- */
   @media (max-width: 1100px) {
@@ -342,7 +438,7 @@
   }
   @media (max-width: 900px) {
     html { font-size: 16px; }
-    .topo { flex-wrap: wrap; gap: .875rem; padding: .875rem 1rem; }
+    .topo { flex-wrap: wrap; gap: .875rem; padding: .875rem 1rem; position: relative; }
     .corpo { grid-template-rows: none; }
     .topo, .lateral, .conteudo { grid-column: auto; grid-row: auto; }
     .topo::before, .marca { display: none; }
@@ -352,23 +448,62 @@
     .titulo h1 { font-size: 1.3rem; }
     .titulo p { font-size: .8rem; margin-top: .125rem; }
     .titulo p.municipio { display: block; font-size: .8rem; margin-top: .25rem; }
-    .filtros { margin-left: 0; width: 100%; }
+    .filtros-bloco { margin-left: 0; flex: 1 1 100%; align-items: stretch; }
+    .filtros { flex-wrap: wrap; }
+    .titulo h1, .titulo p { white-space: normal; }
+    .ativos { justify-content: flex-start; }
     .filtro { flex: 1 1 8.75rem; }
     .filtro select { width: 100%; }
     .corpo { grid-template-columns: 1fr; }
-    .lateral { padding: .625rem 1rem; }
+    /* menu fixo no topo ao rolar; bloco "Fonte" vira uma linha só */
+    .lateral { padding: .5rem 1rem; height: auto; overflow: visible; z-index: 6; box-shadow: 0 .25rem .75rem rgba(0,0,0,.25); }
+    .versao, .imprimir { display: none; }
+    .fonte { display: flex; align-items: center; gap: .5rem; padding: .3125rem .625rem; }
+    .fonte .txt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fonte .txt > b, .fonte .nm, .fonte br { display: none; }
+    .fonte .acoes { margin-top: 0; flex: none; flex-wrap: nowrap; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+    .kpi { padding: .625rem; gap: .5rem; min-height: 4.5rem; }
+    .kpi svg { width: 1.5rem; height: 1.5rem; }
+    .kpi .val, .kpis .kpi:first-child .val { font-size: 1.0625rem; }
+    .kpi .rot, .kpi .sub { font-size: max(11px, .75rem); }
+    .gav-val { grid-template-columns: 1fr 1fr; }
     .menu { flex-direction: row; overflow-x: auto; }
     .menu button { white-space: nowrap; font-size: .875rem; padding: .5rem .625rem; }
     .menu button br { display: none; }
     .menu svg { width: 1.375rem; height: 1.375rem; }
-    .fonte { margin-top: .625rem; }
+    .fonte { margin-top: .5rem; }
     .conteudo { padding: .875rem 1rem; }
-    .kpis, .l2, .l-obras2, .l-inv, .eco-resumo, .objetivos { grid-template-columns: 1fr; }
+    .l2, .l-obras2, .l-inv, .eco-resumo, .objetivos { grid-template-columns: 1fr; }
     .kr { grid-template-columns: 1fr; }
     .okrs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .situacao { flex-direction: column; }
     .tab-topo { flex-wrap: wrap; }
-    .busca { width: 100%; }
+    .tab-acoes { width: 100%; flex-wrap: wrap; }
+    .busca { flex: 1; width: auto; min-width: 8rem; }
+  }
+
+  /* ---------- Impressão / PDF (página atual, com os filtros aplicados) ---------- */
+  @page { size: A4 landscape; margin: 9mm; }
+  @media print {
+    html { font-size: 11px; }
+    body { background: #fff; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; animation: none !important; }
+    .lateral, .filtros, .tab-acoes, .gaveta, .gaveta-fundo, .dica, .nova-versao, .sobrepor, .recolher, .ativos .limpar, .ativos .tag b { display: none !important; }
+    .corpo { display: block; min-height: 0; }
+    .topo { position: static; min-height: 0; padding: .625rem 1rem; }
+    .topo::before { display: none; }
+    .brasao-topo { display: block; flex: none; width: 4rem; height: 4rem; object-fit: contain; }
+    .titulo h1 { font-size: 1.75rem; }
+    .so-impressao { display: block; font-size: .875rem !important; opacity: .85; }
+    .conteudo { display: block; padding: .75rem 0 0; }
+    .conteudo > * { margin-bottom: .75rem; }
+    .card, .kpi, .objetivo, tr { break-inside: avoid; }
+    .card:has(.tabela-wrap), .card.obj { break-inside: auto; }
+    .card { box-shadow: none; }
+    .tabela-wrap, .gantt, .rolagem { max-height: none !important; overflow: visible !important; }
+    thead th { position: static; }
+    .objs-grid[hidden], .inis[hidden] { display: none !important; }
   }
 </style>
 </head>
@@ -381,12 +516,16 @@
       <h1>OKR – Gestão 2025–2028</h1>
       <p>Painel de Acompanhamento da Gestão Estratégica</p>
       <p class="municipio">Município de Santo Cristo - RS</p>
+      <p class="so-impressao" id="impresso"></p>
     </div>
-    <div class="filtros">
-      <div class="filtro"><label for="f-ano">Ano</label><select id="f-ano"></select></div>
-      <div class="filtro"><label for="f-sec">Secretaria</label><select id="f-sec"></select></div>
-      <div class="filtro"><label for="f-eixo">Eixo Estratégico</label><select id="f-eixo"></select></div>
-      <div class="filtro"><label for="f-sit">Situação</label><select id="f-sit"></select></div>
+    <div class="filtros-bloco">
+      <div class="filtros">
+        <div class="filtro"><label for="f-ano">Ano</label><select id="f-ano"></select></div>
+        <div class="filtro"><label for="f-sec">Secretaria</label><select id="f-sec"></select></div>
+        <div class="filtro"><label for="f-eixo">Eixo Estratégico</label><select id="f-eixo"></select></div>
+        <div class="filtro"><label for="f-sit">Situação</label><select id="f-sit"></select></div>
+      </div>
+      <div class="ativos" id="ativos" aria-label="Filtros ativos" hidden></div>
     </div>
   </header>
 
@@ -398,6 +537,8 @@
     </div>
     <ul class="menu" id="menu"></ul>
     <div class="fonte" id="fonte">Nenhuma planilha conectada.</div>
+    <button class="imprimir" id="btn-imprimir" title="Imprime a página atual, com os filtros aplicados. Na janela de impressão, escolha “Salvar como PDF”.">Imprimir / PDF</button>
+    <div class="versao">Painel · Versão 2.0</div>
   </nav>
 
   <main class="conteudo" id="pagina-resumo">
@@ -421,8 +562,8 @@
     <section class="linha l4">
       <div class="card">
         <div class="tab-topo">
-          <h2>Principais Projetos em Acompanhamento</h2>
-          <input class="busca" id="busca" type="search" placeholder="Buscar projeto…">
+          <h2>Projetos em Acompanhamento <small data-conta="tabela"></small></h2>
+          <div class="tab-acoes"><input class="busca" data-busca="tabela" type="search" placeholder="Buscar projeto…" aria-label="Buscar projeto"><button class="btn sec mini" data-csv="tabela" data-nome="projetos" title="Baixa as linhas exibidas (filtros, busca e ordem atuais) para abrir no Excel">Exportar CSV</button></div>
         </div>
         <div class="tabela-wrap"><table id="tabela"></table></div>
       </div>
@@ -454,7 +595,7 @@
     </section>
 
     <section class="card">
-      <h2>Marcos das Obras e Entregas</h2>
+      <div class="tab-topo"><h2>Marcos das Obras e Entregas <small data-conta="obras-tabela"></small></h2><div class="tab-acoes"><input class="busca" data-busca="obras-tabela" type="search" placeholder="Buscar projeto…" aria-label="Buscar projeto"><button class="btn sec mini" data-csv="obras-tabela" data-nome="marcos-das-obras" title="Baixa as linhas exibidas (filtros, busca e ordem atuais) para abrir no Excel">Exportar CSV</button></div></div>
       <div class="tabela-wrap alta"><table id="obras-tabela"></table></div>
       <div class="nota" id="obras-nota"></div>
     </section>
@@ -474,7 +615,7 @@
     </section>
 
     <section class="card">
-      <h2>Projetos com Recurso Externo</h2>
+      <div class="tab-topo"><h2>Projetos com Recurso Externo <small data-conta="inv-tabela"></small></h2><div class="tab-acoes"><input class="busca" data-busca="inv-tabela" type="search" placeholder="Buscar projeto…" aria-label="Buscar projeto"><button class="btn sec mini" data-csv="inv-tabela" data-nome="recursos-externos" title="Baixa as linhas exibidas (filtros, busca e ordem atuais) para abrir no Excel">Exportar CSV</button></div></div>
       <div class="tabela-wrap alta"><table id="inv-tabela"></table></div>
       <div class="nota" id="inv-nota"></div>
     </section>
@@ -498,7 +639,7 @@
     </section>
 
     <section class="card">
-      <div class="tab-topo"><h2 id="prz-tab-titulo">Pendências por Projeto</h2><button class="btn sec" id="prz-limpar" hidden>Mostrar todas</button></div>
+      <div class="tab-topo"><h2 id="prz-tab-titulo">Pendências por Projeto</h2><div class="tab-acoes"><button class="btn sec mini" id="prz-limpar" hidden>Mostrar todas</button><input class="busca" data-busca="prz-tabela" type="search" placeholder="Buscar projeto…" aria-label="Buscar projeto"><button class="btn sec mini" data-csv="prz-tabela" data-nome="pendencias-de-cadastro" title="Baixa as linhas exibidas (filtros, busca e ordem atuais) para abrir no Excel">Exportar CSV</button></div></div>
       <div class="tabela-wrap alta"><table id="prz-tabela"></table></div>
     </section>
   </main>
@@ -513,10 +654,11 @@
     </section>
   </main>
 
-  <main class="conteudo" id="pagina-outra" hidden>
-    <div class="em-definicao"><h2 id="outra-titulo"></h2><p>Página em definição. Diga quais indicadores e visões ela deve ter e ela será montada com os dados da mesma planilha.</p></div>
-  </main>
 </div>
+
+<div class="dica" id="dica" role="tooltip" hidden></div>
+<div class="gaveta-fundo" id="gaveta-fundo"></div>
+<aside class="gaveta" id="gaveta" role="dialog" aria-modal="true" aria-label="Detalhe do projeto" inert></aside>
 
 <div class="nova-versao" id="nova-versao" role="status" hidden>
   <span>Há uma <b>nova versão</b> do painel.</span>
@@ -548,7 +690,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-10 09:15';
+const VERSAO_PAINEL = '2026-11-10 10:03';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -561,14 +703,14 @@ const CONFIG = {
 };
 
 const SITUACOES = {
-  'concluido':         { rotulo: 'Concluído',         cor: '#1f9d3a', ordem: 4, avanco: 100 },
-  'em execucao':       { rotulo: 'Em execução',       cor: '#1e63d6', ordem: 1, avanco: 75 },
-  'em licitacao':      { rotulo: 'Em licitação',      cor: '#f0a91a', ordem: 2, avanco: 50 },
-  'em projeto':        { rotulo: 'Em projeto',        cor: '#8b4fd8', ordem: 3, avanco: 25 },
-  'aguardando emenda': { rotulo: 'Aguardando emenda', cor: '#e04848', ordem: 5, avanco: 5 },
-  'projetado':         { rotulo: 'Projetado',         cor: '#64748b', ordem: 6, avanco: 10 },
-  'sem movimentacao':  { rotulo: 'Sem movimentação',  cor: '#a1887f', ordem: 7, avanco: 0 },
-  '':                  { rotulo: 'Não informado',     cor: '#cbd5e1', ordem: 8, avanco: 0 }
+  'concluido':         { rotulo: 'Concluído',         cor: '#1f9d3a', ordem: 4 },
+  'em execucao':       { rotulo: 'Em execução',       cor: '#1e63d6', ordem: 1 },
+  'em licitacao':      { rotulo: 'Em licitação',      cor: '#f0a91a', ordem: 2 },
+  'em projeto':        { rotulo: 'Em projeto',        cor: '#8b4fd8', ordem: 3 },
+  'aguardando emenda': { rotulo: 'Aguardando emenda', cor: '#e04848', ordem: 5 },
+  'projetado':         { rotulo: 'Projetado',         cor: '#64748b', ordem: 6 },
+  'sem movimentacao':  { rotulo: 'Sem movimentação',  cor: '#a1887f', ordem: 7 },
+  '':                  { rotulo: 'Não informado',     cor: '#cbd5e1', ordem: 8 }
 };
 
 const NOMES_SECRETARIA = {
@@ -642,6 +784,8 @@ function data(v) {
   return null;
 }
 const texto = v => (v == null ? '' : String(v)).trim();
+// cor do texto sobre um fundo colorido: escuro em fundos claros, branco nos demais
+const corTexto = h => { const [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#0b1f45' : '#fff'; };
 // "%" da planilha: 0,3 (célula formatada em %), "30%" ou 30 → 0,3. Vazio → null.
 function percentual(v) {
   if (v == null || v === '') return null;
@@ -708,10 +852,11 @@ function lerPlanilha(buf) {
     const acao = texto(pega(l, 'descricao')) || texto(pega(l, 'acao')) || tAcao;
     if (!acao) continue;
     const stKey = normaliza(pega(l, 'status'));
-    const st = SITUACOES[stKey] || { rotulo: texto(pega(l, 'status')), cor: '#94a3b8', ordem: 8, avanco: 0 };
+    const st = SITUACOES[stKey] || { rotulo: texto(pega(l, 'status')), cor: '#94a3b8', ordem: 8 };
     const ano = numero(pega(l, 'ano'));
     const [titulo, ...resto] = acao.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     const p = {
+      id: projetos.length, descricao: acao,
       situacao: st.rotulo, cor: st.cor, ordem: st.ordem,
       ano: ano ? String(Math.round(ano)) : 'Sem ano',
       eixo: texto(pega(l, 'eixo')).replace(/^(\d+)\s*[-–—]+\s*/, '$1 - ') || 'Não informado',  // "3 -- X" vira "3 - X"
@@ -747,56 +892,141 @@ function lerPlanilha(buf) {
    Estado, filtros e navegação
    ===================================================================== */
 let TODOS = [];
-const filtros = { ano: '', sec: '', eixo: '', sit: '' };
-let ordenacao = { campo: 'ordem', asc: true };
+// Filtros: os 4 primeiros têm caixa de seleção no cabeçalho; os demais são aplicados clicando nos gráficos.
+// Todos aparecem como etiqueta no cabeçalho e vão para o endereço (#pagina?sec=SDUE&sit=…).
+const CAMPO_FILTRO = {
+  ano:  { r: 'Ano',        v: p => p.ano },
+  sec:  { r: 'Secretaria', v: p => p.sec },
+  eixo: { r: 'Eixo',       v: p => p.eixo },
+  sit:  { r: 'Situação',   v: p => p.situacao },
+  tipo: { r: 'Tipo',       v: p => p.acaoTitulo },
+  com:  { r: 'Comunidade', v: p => p.comunidade || 'Não informada' },
+  orig: { r: 'Origem',     v: p => p.origem },
+  obj:  { r: 'Objetivo',   v: p => p.objetivo }
+};
+const FILTROS_SEL = ['ano', 'sec', 'eixo', 'sit'];
+const filtros = Object.fromEntries(Object.keys(CAMPO_FILTRO).map(k => [k, '']));
+let paginaAtual = 'resumo';
 
-function opcoes(sel, valores, rotular = v => v) {
-  const atual = sel.value;
-  sel.innerHTML = '<option value="">Todos</option>' + valores.map(v => `<option value="${esc(v)}">${esc(rotular(v))}</option>`).join('');
-  sel.value = valores.includes(atual) ? atual : '';
+function opcoes(sel, valores, desejado) {
+  sel.innerHTML = '<option value="">Todos</option>' + valores.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  sel.value = valores.includes(desejado) ? desejado : '';
 }
 function montarFiltros() {
   const unicos = f => [...new Set(TODOS.map(f))];
   const fim = (a, ultimos) => a.sort((x, y) => (ultimos.includes(x) - ultimos.includes(y)) || x.localeCompare(y, 'pt-BR'));
-  opcoes($('f-ano'), fim(unicos(p => p.ano), ['Sem ano']));
-  opcoes($('f-sec'), fim(unicos(p => p.sec), ['Não informada']));
-  opcoes($('f-eixo'), fim(unicos(p => p.eixo), ['Não informado']));
-  const sits = unicos(p => p.situacao).sort((a, b) => ordemDe(a) - ordemDe(b));
-  opcoes($('f-sit'), sits);
-  for (const k of Object.keys(filtros)) filtros[k] = $('f-' + k).value;
+  opcoes($('f-ano'), fim(unicos(p => p.ano), ['Sem ano']), filtros.ano);
+  opcoes($('f-sec'), fim(unicos(p => p.sec), ['Não informada']), filtros.sec);
+  opcoes($('f-eixo'), fim(unicos(p => p.eixo), ['Não informado']), filtros.eixo);
+  opcoes($('f-sit'), unicos(p => p.situacao).sort((a, b) => ordemDe(a) - ordemDe(b)), filtros.sit);
+  for (const k of FILTROS_SEL) filtros[k] = $('f-' + k).value;
+  // filtro de gráfico cujo valor não existe mais na planilha é descartado
+  for (const k of Object.keys(filtros)) if (!FILTROS_SEL.includes(k) && filtros[k] && !TODOS.some(p => CAMPO_FILTRO[k].v(p) === filtros[k])) filtros[k] = '';
 }
 const ordemDe = rot => (Object.values(SITUACOES).find(s => s.rotulo === rot) || { ordem: 8 }).ordem;
 const corDe = rot => (Object.values(SITUACOES).find(s => s.rotulo === rot) || { cor: '#94a3b8' }).cor;
 
 function filtrados() {
-  return TODOS.filter(p =>
-    (!filtros.ano || p.ano === filtros.ano) &&
-    (!filtros.sec || p.sec === filtros.sec) &&
-    (!filtros.eixo || p.eixo === filtros.eixo) &&
-    (!filtros.sit || p.situacao === filtros.sit));
+  const ativos = Object.keys(filtros).filter(k => filtros[k]);
+  return TODOS.filter(p => ativos.every(k => CAMPO_FILTRO[k].v(p) === filtros[k]));
+}
+function porFiltro(k, v) {
+  filtros[k] = v;
+  if ($('f-' + k)) $('f-' + k).value = v;
 }
 function definirFiltro(k, v) {
-  filtros[k] = filtros[k] === v ? '' : v;
-  $('f-' + k).value = filtros[k];
+  porFiltro(k, filtros[k] === v ? '' : v);
   renderizar();
 }
-for (const k of Object.keys(filtros)) $('f-' + k).addEventListener('change', e => { filtros[k] = e.target.value; renderizar(); });
-$('busca').addEventListener('input', () => renderTabela(filtrados()));
+// atributos de um elemento que filtra ao ser clicado (ver o ouvinte de clique geral)
+const filtra = (k, v) => `data-f="${k}" data-v="${esc(v)}" tabindex="0" role="button"`;
+function renderAtivos() {
+  const at = Object.keys(filtros).filter(k => filtros[k]);
+  $('ativos').hidden = !at.length;
+  $('ativos').innerHTML = at.map(k => `<button class="tag" data-limpar="${k}" aria-label="Remover filtro ${CAMPO_FILTRO[k].r}: ${esc(filtros[k])}"><span>${CAMPO_FILTRO[k].r}: ${esc(filtros[k])}</span><b>×</b></button>`).join('') +
+    (at.length ? '<button class="tag limpar" data-limpar="*">✕ Limpar filtros</button>' : '');
+}
+for (const k of FILTROS_SEL) $('f-' + k).addEventListener('change', e => { filtros[k] = e.target.value; renderizar(); });
+
+// Endereço: #pagina?filtro=valor — permite favoritar e compartilhar a visão filtrada
+function lerHash() {
+  const [pg, qs] = location.hash.slice(1).split('?');
+  const q = new URLSearchParams(qs || '');
+  for (const k of Object.keys(filtros)) filtros[k] = q.get(k) || '';
+  return pg;
+}
+function gravarHash() {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(filtros)) if (v) q.set(k, v);
+  const s = q.toString();
+  history.replaceState(null, '', '#' + paginaAtual + (s ? '?' + s : ''));
+}
 
 $('menu').innerHTML = PAGINAS.map(p => `<li><button data-pg="${p.id}" class="${p.id === 'resumo' ? 'ativo' : ''}">${ICONES[p.icone]}<span>${p.rotulo}</span></button></li>`).join('');
 function irPara(id) {
   const pg = PAGINAS.find(p => p.id === id) || PAGINAS[0];
+  paginaAtual = pg.id;
   document.querySelectorAll('#menu button').forEach(x => x.classList.toggle('ativo', x.dataset.pg === pg.id));
-  const prontas = ['resumo', 'obras', 'investimentos', 'prazos', 'metas'];
-  for (const p of prontas) $('pagina-' + p).hidden = pg.id !== p;
-  $('pagina-outra').hidden = prontas.includes(pg.id);
-  $('outra-titulo').innerHTML = pg.rotulo.replace('<br>', ' ');
-  history.replaceState(null, '', '#' + pg.id);  // permite favoritar/abrir direto uma página
+  for (const p of PAGINAS) $('pagina-' + p.id).hidden = pg.id !== p.id;
+  gravarHash();
   window.scrollTo(0, 0);
 }
 $('menu').addEventListener('click', e => { const b = e.target.closest('button'); if (b) irPara(b.dataset.pg); });
-irPara(location.hash.slice(1));
-window.addEventListener('hashchange', () => irPara(location.hash.slice(1)));
+irPara(lerHash());
+window.addEventListener('hashchange', () => {
+  const pg = lerHash();
+  if (TODOS.length) { montarFiltros(); renderizar(); }
+  if (pg !== paginaAtual) irPara(pg); else gravarHash();
+});
+
+// Clique geral: etiquetas de filtro, elementos que filtram (data-f) e elementos que abrem o detalhe (data-pid)
+document.addEventListener('click', e => {
+  const rc = e.target.closest('[data-recolher], [data-kr]');
+  if (rc) {   // Metas: recolhe o eixo ou lista as iniciativas, sem redesenhar a página
+    const eixo = rc.dataset.recolher != null, conj = eixo ? eixosFechados : krsAbertos, k = eixo ? rc.dataset.recolher : rc.dataset.kr;
+    conj.has(k) ? conj.delete(k) : conj.add(k);
+    const aberto = eixo ? !conj.has(k) : conj.has(k);
+    rc.setAttribute('aria-expanded', aberto);
+    (eixo ? rc.closest('.obj').querySelector('.objs-grid') : rc.closest('.kr').querySelector('.inis')).hidden = !aberto;
+    return;
+  }
+  const th = e.target.closest('table[data-tab] th[data-col]');
+  if (th) {
+    const id = th.closest('table').dataset.tab, t = TABELAS[id], i = +th.dataset.col;
+    if (t.col === i) t.asc = !t.asc; else { t.col = i; t.asc = !t.cols[i].desc; }
+    return desenharTabela(id);
+  }
+  const csv = e.target.closest('[data-csv]');
+  if (csv) return exportarCSV(csv.dataset.csv, csv.dataset.nome);
+  const l = e.target.closest('[data-limpar]');
+  if (l) {
+    for (const k of Object.keys(filtros)) if (l.dataset.limpar === '*' || l.dataset.limpar === k) porFiltro(k, '');
+    return renderizar();
+  }
+  const f = e.target.closest('[data-f]');
+  if (f) {
+    const d = f.dataset;
+    if (!d.f2) return definirFiltro(d.f, d.v);
+    const igual = filtros[d.f] === d.v && filtros[d.f2] === d.v2;   // célula da matriz: dois filtros de uma vez
+    porFiltro(d.f, igual ? '' : d.v); porFiltro(d.f2, igual ? '' : d.v2);
+    return renderizar();
+  }
+  const pr = e.target.closest('[data-pid]');
+  if (pr) abrirDetalhe(+pr.dataset.pid, pr);
+});
+document.addEventListener('input', e => {
+  const id = e.target.dataset && e.target.dataset.busca;
+  if (id && TABELAS[id]) { TABELAS[id].q = e.target.value; desenharTabela(id); }
+});
+$('btn-imprimir').onclick = () => window.print();
+window.addEventListener('beforeprint', () => {
+  const pg = PAGINAS.find(p => p.id === paginaAtual).rotulo.replace('<br>', ' ');
+  $('impresso').textContent = `${pg} · ${TODOS.length ? filtrados().length + ' de ' + TODOS.length + ' projetos · ' : ''}gerado em ${new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`;
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') return fecharDetalhe();
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[data-f]:not(button), [data-pid]')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
+});
 
 /* =====================================================================
    Renderização
@@ -805,6 +1035,8 @@ const soma = (arr, f) => arr.reduce((s, p) => s + (f(p) || 0), 0);
 
 function renderizar() {
   document.querySelectorAll('.filtro select').forEach(s => s.classList.toggle('ativo', !!s.value));
+  renderAtivos();
+  gravarHash();
   const d = filtrados();
   const t = {
     proj: soma(d, p => p.proj), proprio: soma(d, p => p.proprio), melhoria: soma(d, p => p.melhoria),
@@ -825,18 +1057,18 @@ function renderizar() {
   renderMetas(d);
 }
 
-const kpiHtml = (cls, ic, rot, val, sub) => `<div class="kpi ${cls}">${ICONES[ic]}<div><div class="rot" title="${rot}">${rot}</div><div class="val">${val}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div></div>`;
+const kpiHtml = (cls, ic, rot, val, sub, attr = '') => `<div class="kpi ${cls}" ${attr}>${ICONES[ic]}<div><div class="rot">${rot}</div><div class="val">${val}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div></div>`;
 
 function renderKpis(t) {
   const pct = v => fmtPct(t.proj ? v / t.proj : NaN);
   const k = kpiHtml;
   $('kpis').innerHTML =
-    k('k1', 'alvo', 'Investimento Projetado', fmtMi(t.proj)) +
-    k('k2', 'moedas', 'Recursos Próprios', fmtMi(t.proprio), pct(t.proprio) + ' do total') +
-    k('k3', 'cone', 'Contrib. de Melhoria', fmtMi(t.melhoria), pct(t.melhoria) + ' do total') +
-    k('k4', 'maos', 'Recursos Externos', fmtMi(t.externo), pct(t.externo) + ' do total') +
-    k('k5', 'doc', 'Valor Licitado', fmtMi(t.lic), pct(t.lic) + ' do projetado') +
-    k('k6', 'barras', 'Diferença (Prev. – Lic.)', fmtMi(t.dif));
+    k('kn', 'alvo', 'Investimento Projetado', fmtMi(t.proj)) +
+    k('kf1', 'moedas', 'Recursos Próprios', fmtMi(t.proprio), pct(t.proprio) + ' do total') +
+    k('kf2', 'cone', 'Contrib. de Melhoria', fmtMi(t.melhoria), pct(t.melhoria) + ' do total') +
+    k('kf3', 'maos', 'Recursos Externos', fmtMi(t.externo), pct(t.externo) + ' do total') +
+    k('kn2', 'doc', 'Valor Licitado', fmtMi(t.lic), pct(t.lic) + ' do projetado') +
+    k('kc', 'barras', 'Diferença (Prev. – Lic.)', fmtMi(t.dif));
 }
 
 function renderSituacao(d) {
@@ -851,7 +1083,7 @@ function renderSituacao(d) {
   for (const i of itens) {
     if (!i.n) continue;
     const frac = i.n / total;
-    arcos += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${corDe(i.s)}" stroke-width="${sw}"
+    arcos += `<circle ${filtra('sit', i.s)} cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${corDe(i.s)}" stroke-width="${sw}"
       stroke-dasharray="${frac * C} ${C}" stroke-dashoffset="${-acc * C}" transform="rotate(-90 ${cx} ${cy})"><title>${esc(i.s)}: ${i.n} (${fmtPct(frac)})</title></circle>`;
     const ang = (acc + frac / 2) * 2 * Math.PI - Math.PI / 2;
     let rr = r + sw / 2 + 16, x, y;
@@ -872,9 +1104,8 @@ function renderSituacao(d) {
   const svg = `<svg viewBox="-20 -24 270 220">${arcos}${rotulos}
     <text x="${cx}" y="${cy + 2}" text-anchor="middle" font-size="26" font-weight="800" fill="#0f2a5c">${total}</text>
     <text x="${cx}" y="${cy + 21}" text-anchor="middle" font-size="14" fill="#12203a">Projetos</text></svg>`;
-  const leg = itens.map(i => `<li><button data-sit="${esc(i.s)}" class="${filtros.sit && filtros.sit !== i.s ? 'off' : ''}" title="Clique para filtrar"><i style="background:${corDe(i.s)}"></i><span>${esc(i.s)}</span><b>${i.n}</b></button></li>`).join('');
+  const leg = itens.map(i => `<li><button data-f="sit" data-v="${esc(i.s)}" class="${filtros.sit && filtros.sit !== i.s ? 'off' : ''}" title="Clique para filtrar"><i style="background:${corDe(i.s)}"></i><span>${esc(i.s)}</span><b>${i.n}</b></button></li>`).join('');
   $('situacao').innerHTML = total ? `<div class="situacao">${svg}<ul class="legenda">${leg}</ul></div>` : '<div class="vazio">Nenhum projeto no filtro.</div>';
-  $('situacao').querySelectorAll('[data-sit]').forEach(b => b.onclick = () => definirFiltro('sit', b.dataset.sit));
 }
 
 function renderExecucao(t) {
@@ -887,58 +1118,64 @@ function renderExecucao(t) {
 
 function renderComposicao(t) {
   const partes = [
-    { r: 'Próprios', v: t.proprio, c: '#1846b8' },
-    { r: 'Melhoria', v: t.melhoria, c: '#f0b323' },
-    { r: 'Externos', v: t.externo, c: '#12a594' }
+    { r: 'Próprios', v: t.proprio, c: FONTES[0].c },
+    { r: 'Melhoria', v: t.melhoria, c: FONTES[1].c },
+    { r: 'Externos', v: t.externo, c: FONTES[2].c }
   ];
   const semFonte = t.proj - t.proprio - t.melhoria - t.externo;
-  if (t.proj && semFonte / t.proj > 0.005) partes.push({ r: 'Sem fonte definida', v: semFonte, c: '#b7c1d1' });
+  if (t.proj && semFonte / t.proj > 0.005) partes.push({ r: 'Sem fonte definida', v: semFonte, c: FONTES[3].c });
   if (!t.proj) { $('composicao').innerHTML = '<div class="vazio">Sem valores no filtro.</div>'; return; }
-  const barra = partes.map(p => { const f = p.v / t.proj; return `<span style="width:${f * 100}%;background:${p.c}" title="${p.r}: ${fmtMi(p.v)} (${fmtPct(f)})">${f >= 0.075 ? fmtPct(f) : ''}</span>`; }).join('');
+  const barra = partes.map(p => { const f = p.v / t.proj; return `<span style="width:${f * 100}%;background:${p.c};color:${corTexto(p.c)}" title="${p.r}: ${fmtMi(p.v)} (${fmtPct(f)})">${f >= 0.075 ? fmtPct(f) : ''}</span>`; }).join('');
   const leg = partes.map(p => `<div><i style="background:${p.c}"></i><span>${p.r}</span><b>${fmtMi(p.v)}</b></div>`).join('');
   $('composicao').innerHTML = `<div class="comp">${barra}</div><div class="comp-leg">${leg}</div>`;
 }
 
 function renderEvolucao(d) {
   const anos = ['2025', '2026', '2027', '2028'];
+  const semAnoD = d.filter(p => p.ano === 'Sem ano');
+  const semAno = soma(semAnoD, p => p.proj);
+  const temSemAno = semAno > 0 || soma(semAnoD, p => p.lic) > 0;
+  const cats = temSemAno ? [...anos, 'Sem ano'] : anos;
+  const n = cats.length - 1;   // último ponto = total
   let ap = 0, al = 0;
   const proj = [], lic = [];
-  for (const a of anos) {
+  for (const a of cats) {
     const doAno = d.filter(p => p.ano === a);
     ap += soma(doAno, p => p.proj); al += soma(doAno, p => p.lic);
     proj.push(ap); lic.push(al);
   }
-  const semAno = soma(d.filter(p => p.ano === 'Sem ano'), p => p.proj);
   const W = 640, H = 200, L = 70, R = 150, T = 18, B = 26;
   const max = Math.max(...proj, 1);
   const passo = [1, 2, 5, 10, 20, 50].map(x => x * 1e6).find(s => max / s <= 5) || Math.ceil(max / 5e7) * 1e7;
   const topo = Math.ceil(max / passo) * passo;
-  const x = i => L + i * (W - L - R) / (anos.length - 1);
+  const x = i => L + i * (W - L - R) / n;
   const y = v => T + (H - T - B) * (1 - v / topo);
   let grade = '';
   for (let v = 0; v <= topo + 1; v += passo) {
     grade += `<line x1="${L}" x2="${W - R + 10}" y1="${y(v)}" y2="${y(v)}" stroke="#e6ebf3"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="13" fill="#12203a">R$ ${fmtNum(v / 1e6, 0)} mi</text>`;
   }
-  const linha = arr => arr.map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join(' ');
-  const area = arr => `${linha(arr)} L${x(arr.length - 1)},${y(0)} L${x(0)},${y(0)} Z`;
-  const pontos = (arr, cor, nome) => arr.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="5" fill="#fff" stroke="${cor}" stroke-width="2.5"><title>${nome} até ${anos[i]}: ${fmtMi(v)}</title></circle>`).join('');
-  const balao = (v, yy, cor) => { const txt = fmtMi(v), w = txt.length * 8 + 16; return `<g><rect x="${x(3) - w / 2}" y="${yy - 13}" width="${w}" height="26" rx="4" fill="${cor}"/><text x="${x(3)}" y="${yy + 5}" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">${txt}</text></g>`; };
-  const yP = Math.max(14, y(proj[3]) - 4), yL = Math.min(H - B - 14, Math.max(yP + 34, y(lic[3]) - 26));
+  const linha = (arr, de, ate) => arr.slice(de, ate + 1).map((v, i) => `${i ? 'L' : 'M'}${x(de + i)},${y(v)}`).join(' ');
+  const area = arr => `${linha(arr, 0, n)} L${x(n)},${y(0)} L${x(0)},${y(0)} Z`;
+  const tracos = (arr, cor) => `<path d="${linha(arr, 0, 3)}" fill="none" stroke="${cor}" stroke-width="2.5"/>` +
+    (temSemAno ? `<path d="${linha(arr, 3, 4)}" fill="none" stroke="${cor}" stroke-width="2.5" stroke-dasharray="6 5"/>` : '');
+  const pontos = (arr, cor, nome) => arr.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="5" fill="#fff" stroke="${cor}" stroke-width="2.5"><title>${i < 4 ? `${nome} até ${anos[i]}` : `${nome} total (com os projetos sem ano)`}: ${fmtMi(v)}</title></circle>`).join('');
+  const balao = (v, yy, cor) => { const txt = fmtMi(v), w = txt.length * 8 + 16; return `<g><rect x="${x(n) - w / 2}" y="${yy - 13}" width="${w}" height="26" rx="4" fill="${cor}"/><text x="${x(n)}" y="${yy + 5}" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">${txt}</text></g>`; };
+  const yP = Math.max(14, y(proj[n]) - 4), yL = Math.min(H - B - 14, Math.max(yP + 34, y(lic[n]) - 26));
   $('evolucao').innerHTML = `<svg viewBox="0 0 ${W} ${H}">
     <defs><linearGradient id="gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6" stop-opacity=".35"/><stop offset="1" stop-color="#3b82f6" stop-opacity=".08"/></linearGradient></defs>
     ${grade}
     <path d="${area(proj)}" fill="url(#gp)"/><path d="${area(lic)}" fill="#1f9d3a" fill-opacity=".12"/>
-    <path d="${linha(proj)}" fill="none" stroke="#1e63d6" stroke-width="2.5"/><path d="${linha(lic)}" fill="none" stroke="#1f9d3a" stroke-width="2.5"/>
+    ${tracos(proj, '#1e63d6')}${tracos(lic, '#1f9d3a')}
     ${pontos(proj, '#1e63d6', 'Projetado')}${pontos(lic, '#1f9d3a', 'Licitado')}
-    ${anos.map((a, i) => `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="15" fill="#12203a">${a}</text>`).join('')}
-    <g transform="translate(${R - 60} 0)">${balao(proj[3], yP, '#1846b8')}${balao(lic[3], yL, '#1f8a36')}</g>
-  </svg>${semAno > 0 ? `<div class="nota">${fmtMi(semAno)} em projetos sem ano definido não entram na curva.</div>` : ''}`;
+    ${cats.map((a, i) => `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="${i < 4 ? 15 : 13}" fill="${i < 4 ? '#12203a' : '#7d8aa3'}">${a}</text>`).join('')}
+    <g transform="translate(${R - 60} 0)">${balao(proj[n], yP, '#1846b8')}${balao(lic[n], yL, '#1f8a36')}</g>
+  </svg>${temSemAno ? `<div class="nota">Trecho tracejado: ${fmtMi(semAno)} em projetos sem ano definido, somados no fim da curva para o total bater com o Investimento Projetado.</div>` : ''}`;
 }
 
 function renderSecretarias(d, total) {
   const g = {};
   d.forEach(p => g[p.sec] = (g[p.sec] || 0) + p.proj);
-  let lista = Object.entries(g).filter(([s]) => s !== 'Não informada').sort((a, b) => b[1] - a[1]);
+  let lista = Object.entries(g).filter(([s, v]) => s !== 'Não informada' && v > 0).sort((a, b) => b[1] - a[1]);
   const top = lista.slice(0, 5);
   const outras = lista.slice(5).reduce((s, x) => s + x[1], 0) + (g['Não informada'] || 0);
   const linhas = top.map(([s, v]) => ({ s, rot: NOMES_SECRETARIA[s] || s, v }));
@@ -948,43 +1185,78 @@ function renderSecretarias(d, total) {
   const cores = ['#0f2a8a', '#1846b8', '#1e63d6', '#3b8af0', '#6cb0f6'];
   $('secretarias').innerHTML = `<div class="secs">${linhas.map((l, i) => `
     <div class="nome">${esc(l.rot)}</div>
-    <div class="trilho" ${l.s ? `data-sec="${esc(l.s)}" title="Clique para filtrar"` : ''}><span style="width:calc(${l.v / max} * (100% - 150px));background:${l.s ? cores[i] : '#b7c1d1'}"></span><em>${fmtMi(l.v)} (${fmtPct(l.v / total)})</em></div>`).join('')}</div>`;
-  $('secretarias').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => definirFiltro('sec', b.dataset.sec));
+    <div class="trilho" ${l.s ? `${filtra('sec', l.s)} title="Clique para filtrar"` : 'style="cursor:default"'}><span style="width:calc(${l.v / max} * (100% - 150px));background:${l.s ? cores[i] : '#b7c1d1'}"></span><em>${fmtMi(l.v)} (${fmtPct(l.v / total)})</em></div>`).join('')}</div>`;
 }
 
-const COLS_TABELA = [
-  { c: 'titulo', r: 'Projeto / Ação' }, { c: 'sec', r: 'Secretaria' },
-  { c: 'proj', r: 'Valor Projetado', num: true }, { c: 'lic', r: 'Valor Licitado', num: true },
-  { c: 'ordem', r: 'Situação' }, { c: 'avanco', r: 'Avanço', info: 'Execução física: obras em execução pela coluna % da planilha; concluídas = 100%. Demais situações não têm percentual.' },
-  { c: 'dtEnt', r: 'Prev. Entrega' }
-];
+// atributos de um elemento que abre o detalhe do projeto ao ser clicado
+const abre = p => `data-pid="${p.id}" tabindex="0" aria-label="Ver detalhe: ${esc(p.titulo)}"`;
+
+/* Tabelas de projetos — todas ordenam (clique no cabeçalho), buscam e exportam CSV.
+   Coluna: r = rótulo · v = valor para ordenar/exportar · h = HTML da célula · csv = valor exportado (se diferente de v)
+           cls = classe da célula · desc = 1º clique ordena do maior para o menor · info = texto do "i" */
+const TABELAS = {};
+const pilula = p => `<span class="pilula" style="background:${p.cor}${p.cor === '#cbd5e1' ? ';color:#334155' : ''}">${esc(p.situacao)}</span>`;
+const COL = {
+  projeto: { r: 'Projeto / Ação', cls: 'proj', v: p => p.titulo, h: p => `<b>${esc(p.titulo)}</b>${p.detalhe ? `<small>${esc(p.detalhe)}</small>` : ''}`, csv: p => p.titulo + (p.detalhe ? ' — ' + p.detalhe : '') },
+  sec: { r: 'Secretaria', cls: 'cen', v: p => p.sec, h: p => p.sec === 'Não informada' ? '—' : esc(p.sec) },
+  sit: { r: 'Situação', cls: 'cen', v: p => p.ordem, h: pilula, csv: p => p.situacao },
+  valor: (r, f) => ({ r, cls: 'num', desc: true, v: f, h: p => f(p) ? fmtReal(f(p)) : '—' }),
+  data: (r, k) => ({ r, cls: 'cen', desc: true, v: p => p[k], h: p => fmtData(p[k]) })
+};
+function tabelaProjetos(id, linhas, cols, vazio) {
+  const t = TABELAS[id] || (TABELAS[id] = { col: -1, asc: true, q: '' });   // ordenação e busca sobrevivem aos filtros
+  Object.assign(t, { linhas, cols, vazio });
+  desenharTabela(id);
+}
+function linhasVisiveis(id) {
+  const t = TABELAS[id], q = normaliza(t.q);
+  let ls = q ? t.linhas.filter(p => normaliza([p.titulo, p.detalhe, p.acaoTitulo, p.objetivo, p.sec, p.comunidade, p.origem, p.situacao].join(' ')).includes(q)) : t.linhas.slice();
+  const c = t.cols[t.col];
+  if (c) {   // sem coluna escolhida, vale a ordem padrão da tabela
+    const val = p => { const v = c.v(p); return v instanceof Date ? v.getTime() : v === '' ? null : v; };
+    ls = ls.map((p, i) => ({ p, i, v: val(p) })).sort((a, b) => {
+      if (a.v == null || b.v == null) return (a.v == null) - (b.v == null) || a.i - b.i;   // vazios sempre no fim
+      const r = typeof a.v === 'string' ? a.v.localeCompare(b.v, 'pt-BR') : a.v - b.v;
+      return (t.asc ? r : -r) || a.i - b.i;
+    }).map(x => x.p);
+  }
+  return ls;
+}
+function desenharTabela(id) {
+  const t = TABELAS[id], ls = linhasVisiveis(id);
+  const cab = t.cols.map((c, i) => `<th data-col="${i}" class="${c.cls === 'num' ? 'num' : ''}" title="Clique para ordenar">${c.r}${c.info ? `<span class="info" title="${esc(c.info)}">i</span>` : ''}${t.col === i ? `<span class="seta">${t.asc ? '▲' : '▼'}</span>` : ''}</th>`).join('');
+  const corpo = ls.map(p => `<tr ${abre(p)}>${t.cols.map(c => `<td class="${c.cls || ''}">${c.h ? c.h(p) : esc(c.v(p)) || '—'}</td>`).join('')}</tr>`).join('');
+  $(id).dataset.tab = id;
+  $(id).innerHTML = `<thead><tr>${cab}</tr></thead><tbody>${corpo || `<tr><td colspan="${t.cols.length}" class="vazio">${t.q ? 'Nenhum projeto encontrado na busca.' : t.vazio}</td></tr>`}</tbody>`;
+  const conta = document.querySelector(`[data-conta="${id}"]`);
+  if (conta) conta.textContent = `(${ls.length}${ls.length !== t.linhas.length ? ' de ' + t.linhas.length : ''})`;
+}
+// CSV no padrão do Excel em português: ponto e vírgula, vírgula decimal, UTF-8 com BOM
+function exportarCSV(id, nome) {
+  const t = TABELAS[id];
+  if (!t) return;
+  const cel = v => v == null ? '' : v instanceof Date ? fmtData(v) : typeof v === 'number' ? String(v).replace('.', ',')
+    : /^[=+\-@]/.test(v) ? "'" + v : String(v);   // texto que começa com = + - @ não vira fórmula
+  const aspas = c => /[";\r\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c;
+  const linhas = [t.cols.map(c => c.r), ...linhasVisiveis(id).map(p => t.cols.map(c => cel(c.csv ? c.csv(p) : c.v(p))))];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + linhas.map(l => l.map(aspas).join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  const h = new Date();
+  a.download = `${nome || id}-${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
 function renderTabela(d) {
-  const q = normaliza($('busca').value);
-  let linhas = q ? d.filter(p => normaliza(p.titulo + ' ' + p.detalhe + ' ' + p.acaoTitulo + ' ' + p.objetivo + ' ' + p.sec).includes(q)) : d.slice();
-  const { campo, asc } = ordenacao;
-  const val = p => { const v = p[campo]; return v instanceof Date ? v.getTime() : v; };
-  linhas.sort((a, b) => {
-    const va = val(a), vb = val(b);
-    if (va == null && vb == null) return 0; if (va == null) return 1; if (vb == null) return -1;
-    const r = typeof va === 'string' ? va.localeCompare(vb, 'pt-BR') : va - vb;
-    return (asc ? r : -r) || (b.proj - a.proj);
-  });
-  const cab = COLS_TABELA.map(k => `<th data-c="${k.c}" class="${k.num ? 'num' : ''}">${k.r}${k.info ? `<span class="info" title="${esc(k.info)}">i</span>` : ''}${campo === k.c ? `<span class="seta">${asc ? '▲' : '▼'}</span>` : ''}</th>`).join('');
-  const corpo = linhas.map(p => `<tr>
-    <td class="proj" title="${esc(p.titulo + (p.detalhe ? '\n' + p.detalhe : ''))}"><b>${esc(p.titulo)}</b>${p.detalhe ? `<small>${esc(p.detalhe)}</small>` : ''}</td>
-    <td class="cen">${p.sec === 'Não informada' ? '—' : esc(p.sec)}</td>
-    <td class="num">${p.proj ? fmtReal(p.proj) : '—'}</td>
-    <td class="num">${fmtReal(p.lic)}</td>
-    <td class="cen"><span class="pilula" style="background:${p.cor}${p.cor === '#cbd5e1' ? ';color:#334155' : ''}">${esc(p.situacao)}</span></td>
-    <td>${p.avanco == null ? `<span class="avanco est" title="${p.situacao === 'Em execução' ? 'Em execução sem % na planilha' : 'Sem percentual nesta situação'}"><em style="width:auto;margin-left:3.25rem">—</em></span>`
-      : `<span class="avanco"><span class="mini"><span style="width:${p.avanco}%"></span></span><em>${p.avanco}%</em></span>`}</td>
-    <td class="cen">${fmtData(p.dtEnt)}</td></tr>`).join('');
-  $('tabela').innerHTML = `<thead><tr>${cab}</tr></thead><tbody>${corpo || `<tr><td colspan="7" class="vazio">Nenhum projeto encontrado.</td></tr>`}</tbody>`;
-  $('tabela').querySelectorAll('th').forEach(th => th.onclick = () => {
-    const c = th.dataset.c;
-    ordenacao = { campo: c, asc: ordenacao.campo === c ? !ordenacao.asc : !['proj', 'lic', 'avanco', 'dtEnt'].includes(c) };
-    renderTabela(filtrados());
-  });
+  tabelaProjetos('tabela', d.slice().sort((a, b) => a.ordem - b.ordem || b.proj - a.proj), [
+    COL.projeto, COL.sec, COL.valor('Valor Projetado', p => p.proj),
+    { r: 'Valor Licitado', cls: 'num', desc: true, v: p => p.lic, h: p => fmtReal(p.lic) },
+    COL.sit,
+    { r: 'Avanço', desc: true, v: p => p.avanco, info: 'Execução física: obras em execução pela coluna % da planilha; concluídas = 100%. Demais situações não têm percentual.',
+      h: p => p.avanco == null ? `<span class="avanco est" title="${p.situacao === 'Em execução' ? 'Em execução sem % na planilha' : 'Sem percentual nesta situação'}"><em style="width:auto;margin-left:3.25rem">—</em></span>`
+        : `<span class="avanco"><span class="mini"><span style="width:${p.avanco}%"></span></span><em>${p.avanco}%</em></span>` },
+    COL.data('Entrega', 'dtEnt')
+  ], 'Nenhum projeto no filtro.');
 }
 
 function renderOkrs(d) {
@@ -992,9 +1264,11 @@ function renderOkrs(d) {
   const tempos = d.filter(p => p.dtAut && p.dtEnt).map(p => dias(p.dtAut, p.dtEnt));
   const tm = media(tempos);
   const pend = d.filter(p => p.situacao === 'Aguardando emenda').length;
+  const exec = d.filter(p => p.situacao === 'Em execução'), fis = exec.filter(p => p.fisico != null).map(p => p.fisico);
   const c = (ic, v, r, n, cls = '') => `<div class="okr">${ICONES[ic]}<div class="v ${cls}">${v}</div><div class="r">${r}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
   $('okrs').innerHTML =
-    c('engrenagem', 'n/d', 'Projetos no prazo', 'requer coluna de prazo previsto na planilha') +
+    c('engrenagem', fis.length ? fmtPct(fis.reduce((s, v) => s + v, 0) / fis.length, 0) : '—', 'Execução física<br>média',
+      fis.length ? `${fis.length} de ${exec.length} obra(s) em execução com %` : exec.length ? 'obras em execução sem % na planilha' : 'sem obras em execução no filtro') +
     c('confere', d.length ? fmtPct(concl / d.length, 0) : '—', 'Projetos<br>concluídos', `${concl} de ${d.length}`) +
     c('agenda', tm != null ? `${tm} dias` : '—', 'Tempo médio<br>de entrega', tempos.length ? `média de ${tempos.length} projeto(s) entregue(s)` : 'sem entregas no filtro') +
     c('alerta', pend, 'Projetos<br>com pendência', 'aguardando emenda', 'alerta');
@@ -1022,8 +1296,8 @@ function renderObras(d) {
   renderObrasKpis(d);
   renderFunil(d);
   renderGantt(d);
-  renderBarrasGrupo('obras-tipo', d, p => p.acaoTitulo, 8, 'Não informado');
-  renderBarrasGrupo('obras-comunidade', d, p => p.comunidade || 'Não informada', 10, 'Não informada');
+  renderBarrasGrupo('obras-tipo', d, p => p.acaoTitulo, 8, 'Não informado', 'tipo');
+  renderBarrasGrupo('obras-comunidade', d, p => p.comunidade || 'Não informada', 10, 'Não informada', 'com');
   renderMarcos(d);
 }
 
@@ -1035,12 +1309,12 @@ function renderObrasKpis(d) {
   const ultima = entregues.length ? new Date(Math.max(...entregues.map(p => p.dtEnt))) : null;
   const k = kpiHtml;
   $('obras-kpis').innerHTML =
-    k('k2', 'check', 'Concluídos', da('Concluído').length, fmtMi(soma(da('Concluído'), p => p.lic ?? p.proj)) + ' contratados') +
-    k('k1', 'capacete', 'Em execução', da('Em execução').length, fmtMi(soma(da('Em execução'), p => p.proj)) + ' projetados') +
-    k('k3', 'doc', 'Em licitação', da('Em licitação').length, fmtMi(soma(da('Em licitação'), p => p.proj)) + ' projetados') +
-    k('k4', 'caminhao', 'Entregas com data', entregues.length, ultima ? 'última em ' + fmtData(ultima) : 'nenhuma no filtro') +
-    k('k5', 'relogio', 'Tempo médio de licitação', tLic != null ? tLic + ' dias' : '—', 'autorização → licitação') +
-    k('k6', 'calendario', 'Tempo médio de entrega', tEnt != null ? tEnt + ' dias' : '—', 'autorização → entrega');
+    k('ks-concl', 'check', 'Concluídos', da('Concluído').length, fmtMi(soma(da('Concluído'), p => p.lic ?? p.proj)) + ' contratados', filtra('sit', 'Concluído')) +
+    k('ks-exec', 'capacete', 'Em execução', da('Em execução').length, fmtMi(soma(da('Em execução'), p => p.proj)) + ' projetados', filtra('sit', 'Em execução')) +
+    k('ks-lic', 'doc', 'Em licitação', da('Em licitação').length, fmtMi(soma(da('Em licitação'), p => p.proj)) + ' projetados', filtra('sit', 'Em licitação')) +
+    k('kn', 'caminhao', 'Entregas com data', entregues.length, ultima ? 'última em ' + fmtData(ultima) : 'nenhuma no filtro') +
+    k('kn2', 'relogio', 'Tempo médio de licitação', tLic != null ? tLic + ' dias' : '—', 'autorização → licitação') +
+    k('kc', 'calendario', 'Tempo médio de entrega', tEnt != null ? tEnt + ' dias' : '—', 'autorização → entrega');
 }
 
 function renderFunil(d) {
@@ -1112,7 +1386,7 @@ function renderGantt(d) {
     else if (p.situacao === 'Concluído') barras += `<circle cx="${x(ult)}" cy="${yc}" r="5" fill="#fff" stroke="#1f9d3a" stroke-width="2"/>`;
     const dica = [p.titulo + (p.detalhe ? ' — ' + p.detalhe : ''), 'Secretaria: ' + p.sec, 'Situação: ' + p.situacao,
       'Autorização: ' + fmtData(p.dtAut), 'Edital: ' + fmtData(p.dtEdital), 'Licitação: ' + fmtData(p.dtLic), 'Entrega: ' + fmtData(p.dtEnt)].join('\n');
-    linhas += `<g><title>${esc(dica)}</title>
+    linhas += `<g ${abre(p)}><title>${esc(dica)}</title>
       ${i % 2 ? `<rect x="0" y="${y}" width="${W}" height="${RH}" fill="#f7f9fc"/>` : ''}
       <text x="8" y="${yc + 4}" font-size="12.5" fill="#12203a">${esc(corta(rotulo(p), 34))}<tspan fill="#7d8aa3"> · ${esc(p.sec)}</tspan></text>
       ${barras}</g>`;
@@ -1126,7 +1400,7 @@ function renderGantt(d) {
   </svg>`;
 }
 
-function renderBarrasGrupo(id, d, chaveDe, limite, rotuloVazio) {
+function renderBarrasGrupo(id, d, chaveDe, limite, rotuloVazio, filtro) {
   if (!d.length) { $(id).innerHTML = '<div class="vazio">Nenhum projeto no filtro.</div>'; return; }
   const g = new Map();
   d.forEach(p => { const k = chaveDe(p); const o = g.get(k) || { v: 0, n: 0 }; o.v += p.proj; o.n++; g.set(k, o); });
@@ -1140,26 +1414,22 @@ function renderBarrasGrupo(id, d, chaveDe, limite, rotuloVazio) {
   const cores = ['#0f2a8a', '#163a9c', '#1846b8', '#1e57c8', '#1e63d6', '#2f74e6', '#3b8af0', '#5a9df3', '#6cb0f6', '#8cc2f8'];
   $(id).innerHTML = `<div class="secs grupo">${lista.map((l, i) => `
     <div class="nome" title="${esc(l.k)}">${esc(l.k)}</div>
-    <div class="trilho" style="cursor:default"><span style="width:calc(${l.v / max} * (100% - 175px));background:${l.outros ? '#b7c1d1' : cores[i]}"></span><em>${fmtMi(l.v)} · ${l.n} proj.</em></div>`).join('')}</div>`;
+    <div class="trilho" ${l.outros ? 'style="cursor:default"' : filtra(filtro, l.k) + ' title="Clique para filtrar"'}><span style="width:calc(${l.v / max} * (100% - 175px));background:${l.outros ? '#b7c1d1' : cores[i]}"></span><em>${fmtMi(l.v)} · ${l.n} proj.</em></div>`).join('')}</div>`;
 }
 
 function renderMarcos(d) {
   const hoje = hojeUTC();
   const ultimo = p => Math.max(...[p.dtAut, p.dtEdital, p.dtLic, p.dtEnt].filter(Boolean));
   const com = d.filter(temMarco).sort((a, b) => ultimo(b) - ultimo(a));
-  const prazo = p => p.dtAut && p.dtEnt ? `${dias(p.dtAut, p.dtEnt)}`
-    : p.dtAut && emAndamento(p) ? `${dias(p.dtAut, hoje)} <small style="color:var(--texto-3)">em curso</small>` : '—';
-  const cab = ['Projeto / Ação', 'Secretaria', 'Comunidade', 'Autorização', 'Edital', 'Licitação', 'Entrega', 'Dias', 'Situação']
-    .map((r, i) => `<th style="cursor:default" class="${i === 7 ? 'num' : ''}">${r}${i === 7 ? '<span class="info" title="Dias da autorização até a entrega; para obras em andamento, até hoje.">i</span>' : ''}</th>`).join('');
-  const corpo = com.map(p => `<tr>
-    <td class="proj" title="${esc(p.titulo + (p.detalhe ? '\n' + p.detalhe : ''))}"><b>${esc(p.titulo)}</b>${p.detalhe ? `<small>${esc(p.detalhe)}</small>` : ''}</td>
-    <td class="cen">${p.sec === 'Não informada' ? '—' : esc(p.sec)}</td>
-    <td>${esc(p.comunidade) || '—'}</td>
-    <td class="cen">${fmtData(p.dtAut)}</td><td class="cen">${fmtData(p.dtEdital)}</td>
-    <td class="cen">${fmtData(p.dtLic)}</td><td class="cen">${fmtData(p.dtEnt)}</td>
-    <td class="num">${prazo(p)}</td>
-    <td class="cen"><span class="pilula" style="background:${p.cor}${p.cor === '#cbd5e1' ? ';color:#334155' : ''}">${esc(p.situacao)}</span></td></tr>`).join('');
-  $('obras-tabela').innerHTML = `<thead><tr>${cab}</tr></thead><tbody>${corpo || '<tr><td colspan="9" class="vazio">Nenhum projeto com datas no filtro.</td></tr>'}</tbody>`;
+  const nDias = p => p.dtAut && p.dtEnt ? dias(p.dtAut, p.dtEnt) : p.dtAut && emAndamento(p) ? dias(p.dtAut, hoje) : null;
+  tabelaProjetos('obras-tabela', com, [
+    COL.projeto, COL.sec,
+    { r: 'Comunidade', v: p => p.comunidade, h: p => esc(p.comunidade) || '—' },
+    COL.data('Autorização', 'dtAut'), COL.data('Edital', 'dtEdital'), COL.data('Licitação', 'dtLic'), COL.data('Entrega', 'dtEnt'),
+    { r: 'Dias', cls: 'num', desc: true, v: nDias, info: 'Dias da autorização até a entrega; para obras em andamento, até hoje.',
+      h: p => nDias(p) == null ? '—' : p.dtEnt ? nDias(p) : `${nDias(p)} <small style="color:var(--texto-3)">em curso</small>` },
+    COL.sit
+  ], 'Nenhum projeto com datas no filtro.');
   const sem = d.length - com.length;
   $('obras-nota').textContent = sem ? `${sem} projeto(s) do filtro ainda sem nenhuma data (autorização, edital, licitação ou entrega) registrada na planilha.` : '';
 }
@@ -1167,19 +1437,21 @@ function renderMarcos(d) {
 /* =====================================================================
    Página: Investimentos e Captação
    ===================================================================== */
+// Fonte do recurso = tons de verde-água; origem do recurso externo = tons de rosa.
+// Nenhuma repete as cores de situação (verde, azul, âmbar, roxo, vermelho, cinza, marrom).
 const FONTES = [
-  { k: 'proprio', r: 'Próprios', c: '#1846b8' },
-  { k: 'melhoria', r: 'Contrib. de Melhoria', c: '#f0b323' },
-  { k: 'externo', r: 'Externos', c: '#12a594' },
-  { k: 'semFonte', r: 'Sem fonte definida', c: '#c3ccda' }
+  { k: 'proprio', r: 'Próprios', c: '#0b5563' },
+  { k: 'melhoria', r: 'Contrib. de Melhoria', c: '#1493a0' },
+  { k: 'externo', r: 'Externos', c: '#6fd0cb' },
+  { k: 'semFonte', r: 'Sem fonte definida', c: '#d5dbe5' }
 ];
 const TIPOS_ORIGEM = {
-  'Emenda federal':       '#1846b8',
-  'Emenda estadual':      '#12a594',
-  'Governo estadual':     '#f0a91a',
-  'Governo federal':      '#8b4fd8',
-  'Outras origens':       '#64748b',
-  'Origem não informada': '#c3ccda'
+  'Emenda federal':       '#831843',
+  'Emenda estadual':      '#be185d',
+  'Governo estadual':     '#e85a9b',
+  'Governo federal':      '#f5a3c7',
+  'Outras origens':       '#94a3b8',
+  'Origem não informada': '#d5dbe5'
 };
 function tipoOrigem(o) {
   const k = normaliza(o);
@@ -1206,12 +1478,12 @@ function renderInvestimentos(d) {
   const sf = soma(d, semFonte);
   const pct = v => fmtPct(total ? v / total : NaN);
   $('inv-kpis').innerHTML =
-    kpiHtml('k1', 'alvo', 'Investimento Projetado', fmtMi(total), `${d.length} projetos`) +
-    kpiHtml('k4', 'maos', 'Recursos Externos', fmtMi(ext), pct(ext) + ' do total') +
-    kpiHtml('k5', 'doc', 'Emendas e convênios', comOrigem.length, `${origens.size} origem(ns) distinta(s)`) +
-    kpiHtml('k3', 'relogio', 'Aguardando emenda', fmtMi(soma(aguard, p => p.externo)), `${aguard.length} projeto(s) · externo previsto`) +
-    kpiHtml('k2', 'moedas', 'Economia nas licitações', fmtMi(eco), fmtPct(projLic ? eco / projLic : NaN) + ' do projetado licitado') +
-    kpiHtml('k6', 'barras', 'Sem fonte definida', fmtMi(sf), pct(sf) + ' do total');
+    kpiHtml('kn', 'alvo', 'Investimento Projetado', fmtMi(total), `${d.length} projetos`) +
+    kpiHtml('kf3', 'maos', 'Recursos Externos', fmtMi(ext), pct(ext) + ' do total') +
+    kpiHtml('kn2', 'doc', 'Emendas e convênios', comOrigem.length, `${origens.size} origem(ns) distinta(s)`) +
+    kpiHtml('ks-aguard', 'relogio', 'Aguardando emenda', fmtMi(soma(aguard, p => p.externo)), `${aguard.length} projeto(s) · externo previsto`, filtra('sit', 'Aguardando emenda')) +
+    kpiHtml('kn2', 'moedas', 'Economia nas licitações', fmtMi(eco), fmtPct(projLic ? eco / projLic : NaN) + ' do projetado licitado') +
+    kpiHtml('kc', 'barras', 'Sem fonte definida', fmtMi(sf), pct(sf) + ' do total');
   renderOrigens(d);
   renderAnoFonte(d);
   renderFontesSecretaria(d);
@@ -1226,12 +1498,12 @@ function renderOrigens(d) {
   const porTipo = {};
   ext.forEach(p => { const t = tipoOrigem(p.origem); porTipo[t] = (porTipo[t] || 0) + p.externo; });
   const tipos = Object.keys(TIPOS_ORIGEM).filter(t => porTipo[t]);
-  const barra = tipos.map(t => { const f = porTipo[t] / total; return `<span style="width:${f * 100}%;background:${TIPOS_ORIGEM[t]}" title="${t}: ${fmtMi(porTipo[t])} (${fmtPct(f)})">${f >= 0.09 ? fmtPct(f, 0) : ''}</span>`; }).join('');
+  const barra = tipos.map(t => { const f = porTipo[t] / total; return `<span style="width:${f * 100}%;background:${TIPOS_ORIGEM[t]};color:${corTexto(TIPOS_ORIGEM[t])}" title="${t}: ${fmtMi(porTipo[t])} (${fmtPct(f)})">${f >= 0.09 ? fmtPct(f, 0) : ''}</span>`; }).join('');
   const leg = tipos.map(t => `<span><i style="background:${TIPOS_ORIGEM[t]}"></i>${t} <b>${fmtMi(porTipo[t])}</b></span>`).join('');
 
   const g = new Map();
   ext.forEach(p => { const k = p.origem || 'Origem não informada'; const o = g.get(k) || { v: 0, n: 0 }; o.v += p.externo; o.n++; g.set(k, o); });
-  let lista = [...g.entries()].sort((a, b) => b[1].v - a[1].v).map(([k, o]) => ({ k, ...o, cor: TIPOS_ORIGEM[tipoOrigem(k === 'Origem não informada' ? '' : k)] }));
+  let lista = [...g.entries()].sort((a, b) => b[1].v - a[1].v).map(([k, o]) => ({ k, ...o, real: k !== 'Origem não informada', cor: TIPOS_ORIGEM[tipoOrigem(k === 'Origem não informada' ? '' : k)] }));
   if (lista.length > 9) {
     const resto = lista.slice(8);
     lista = lista.slice(0, 8).concat({ k: `Outras ${resto.length} origens`, v: soma(resto, x => x.v), n: soma(resto, x => x.n), cor: '#94a3b8' });
@@ -1240,7 +1512,7 @@ function renderOrigens(d) {
   $('inv-origem').innerHTML = `<div class="comp fina">${barra}</div><div class="fontes-leg">${leg}</div>
     <div class="secs grupo">${lista.map(l => `
       <div class="nome" title="${esc(l.k)}">${esc(l.k)}</div>
-      <div class="trilho" style="cursor:default"><span style="width:calc(${l.v / max} * (100% - 175px));background:${l.cor}"></span><em>${fmtMi(l.v)} · ${l.n} proj.</em></div>`).join('')}</div>`;
+      <div class="trilho" ${l.real ? filtra('orig', l.k) + ' title="Clique para filtrar"' : 'style="cursor:default"'}><span style="width:calc(${l.v / max} * (100% - 175px));background:${l.cor}"></span><em>${fmtMi(l.v)} · ${l.n} proj.</em></div>`).join('')}</div>`;
 }
 
 function renderAnoFonte(d) {
@@ -1258,30 +1530,33 @@ function renderAnoFonte(d) {
   col.forEach((c, i) => {
     const x0 = L + i * bw + bw * 0.2, w = bw * 0.6;
     let acc = 0;
+    svg += `<g ${filtra('ano', c.a)}>`;
     c.partes.forEach((v, j) => {
       if (v <= 0) return;
       svg += `<rect x="${x0}" y="${y(acc + v)}" width="${w}" height="${y(acc) - y(acc + v)}" fill="${FONTES[j].c}"><title>${c.a} · ${FONTES[j].r}: ${fmtMi(v)}</title></rect>`;
       acc += v;
     });
     svg += `<text x="${x0 + w / 2}" y="${y(acc) - 6}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0f2a5c">${fmtMi(c.total)}</text>
-      <text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle" font-size="13.5" fill="#12203a">${c.a}</text>`;
+      <text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle" font-size="13.5" fill="#12203a">${c.a}</text></g>`;
   });
   $('inv-ano').innerHTML = `<svg viewBox="0 0 ${W} ${H}">${svg}</svg>`;
 }
 
 function renderFontesSecretaria(d) {
   legendaFontes('inv-leg-sec', d);
-  if (!d.length) { $('inv-sec').innerHTML = '<div class="vazio">Nenhum projeto no filtro.</div>'; return; }
   const g = new Map();
   d.forEach(p => { const k = p.sec; const o = g.get(k) || { proj: 0, partes: [0, 0, 0, 0] }; o.proj += p.proj; FONTES.forEach((f, j) => o.partes[j] += f.k === 'semFonte' ? semFonte(p) : p[f.k]); g.set(k, o); });
-  const lista = [...g.entries()].sort((a, b) => (a[0] === 'Não informada') - (b[0] === 'Não informada') || b[1].proj - a[1].proj);
-  const max = Math.max(...lista.map(([, o]) => o.partes.reduce((s, v) => s + v, 0)), 1);
+  const total = o => o.partes.reduce((s, v) => s + v, 0);
+  const lista = [...g.entries()].filter(([, o]) => total(o) > 0).sort((a, b) => (a[0] === 'Não informada') - (b[0] === 'Não informada') || b[1].proj - a[1].proj);
+  if (!lista.length) { $('inv-sec').innerHTML = '<div class="vazio">Sem valores no filtro.</div>'; return; }
+  const zeradas = g.size - lista.length;
+  const max = Math.max(...lista.map(([, o]) => total(o)), 1);
   $('inv-sec').innerHTML = `<div class="pilhas">${lista.map(([k, o]) => {
-    const soma4 = o.partes.reduce((s, v) => s + v, 0);
+    const soma4 = total(o);
     const segs = o.partes.map((v, j) => v > 0 ? `<span style="width:${v / soma4 * 100}%;background:${FONTES[j].c}" title="${esc(k)} · ${FONTES[j].r}: ${fmtMi(v)} (${fmtPct(v / soma4)})"></span>` : '').join('');
     return `<div class="nome">${esc(NOMES_SECRETARIA[k] || k)}</div>
-      <div class="linha-p"><div class="pilha" style="width:calc(${soma4 / max} * (100% - 90px))">${segs}</div><em>${fmtMi(o.proj)}</em></div>`;
-  }).join('')}</div>`;
+      <div class="linha-p" ${filtra('sec', k)}><div class="pilha" style="width:calc(${soma4 / max} * (100% - 90px))">${segs}</div><em>${fmtMi(o.proj)}</em></div>`;
+  }).join('')}</div>${zeradas ? `<div class="nota">${zeradas} secretaria(s) sem valor projetado não aparecem.</div>` : ''}`;
 }
 
 function renderEconomia(licitados, eco, projLic) {
@@ -1292,8 +1567,8 @@ function renderEconomia(licitados, eco, projLic) {
   const acima = lista.filter(x => x.e < 0);
   const max = Math.max(...top.map(x => x.e), ...acima.map(x => -x.e), 1);
   const rotulo = rotulador(licitados);
-  const linha = (x, neg) => `<div class="nome" title="${esc(x.p.titulo + (x.p.detalhe ? ' — ' + x.p.detalhe : ''))}">${esc(corta(rotulo(x.p), 36))} <span style="color:var(--texto-3)">· ${esc(x.p.sec)}</span></div>
-    <div class="trilho ${neg ? 'neg' : ''}" style="cursor:default"><span style="width:calc(${Math.abs(x.e) / max} * (100% - 150px));background:${neg ? '#e04848' : '#1f9d3a'}"></span><em>${neg ? '−' : ''}${fmtMi(Math.abs(x.e))} (${fmtPct(Math.abs(x.e) / x.p.proj)})</em></div>`;
+  const linha = (x, neg) => `<div class="nome" ${abre(x.p)} title="${esc(x.p.titulo + (x.p.detalhe ? ' — ' + x.p.detalhe : ''))}">${esc(corta(rotulo(x.p), 36))} <span style="color:var(--texto-3)">· ${esc(x.p.sec)}</span></div>
+    <div class="trilho ${neg ? 'neg' : ''}" data-pid="${x.p.id}"><span style="width:calc(${Math.abs(x.e) / max} * (100% - 150px));background:${neg ? '#e04848' : '#1f9d3a'}"></span><em>${neg ? '−' : ''}${fmtMi(Math.abs(x.e))} (${fmtPct(Math.abs(x.e) / x.p.proj)})</em></div>`;
   $('inv-economia').innerHTML = `<div class="eco-resumo">
       <div><small>Projetado dos licitados</small><b>${fmtMi(projLic)}</b></div>
       <div><small>Valor licitado</small><b>${fmtMi(lic)}</b></div>
@@ -1305,21 +1580,13 @@ function renderEconomia(licitados, eco, projLic) {
 
 function renderTabelaExternos(d) {
   const lista = d.filter(p => p.externo > 0 || p.origem || p.situacao === 'Aguardando emenda').sort((a, b) => b.externo - a.externo);
-  const cab = ['Projeto / Ação', 'Secretaria', 'Origem do recurso', 'Externo', 'Próprio', 'Melhoria', 'Projetado', 'Situação']
-    .map((r, i) => `<th style="cursor:default" class="${i >= 3 && i <= 6 ? 'num' : ''}">${r}</th>`).join('');
-  const corpo = lista.map(p => {
-    const t = tipoOrigem(p.origem);
-    return `<tr>
-    <td class="proj" title="${esc(p.titulo + (p.detalhe ? '\n' + p.detalhe : ''))}"><b>${esc(p.titulo)}</b>${p.detalhe ? `<small>${esc(p.detalhe)}</small>` : ''}</td>
-    <td class="cen">${p.sec === 'Não informada' ? '—' : esc(p.sec)}</td>
-    <td><span class="avanco"><i style="width:10px;height:10px;border-radius:50%;background:${TIPOS_ORIGEM[t]};display:inline-block"></i>${p.origem ? esc(p.origem) : '<span style="color:var(--texto-3)">não informada</span>'}</span></td>
-    <td class="num"><b>${p.externo ? fmtReal(p.externo) : '—'}</b></td>
-    <td class="num">${p.proprio ? fmtReal(p.proprio) : '—'}</td>
-    <td class="num">${p.melhoria ? fmtReal(p.melhoria) : '—'}</td>
-    <td class="num">${p.proj ? fmtReal(p.proj) : '—'}</td>
-    <td class="cen"><span class="pilula" style="background:${p.cor}${p.cor === '#cbd5e1' ? ';color:#334155' : ''}">${esc(p.situacao)}</span></td></tr>`;
-  }).join('');
-  $('inv-tabela').innerHTML = `<thead><tr>${cab}</tr></thead><tbody>${corpo || '<tr><td colspan="8" class="vazio">Nenhum projeto com recurso externo no filtro.</td></tr>'}</tbody>`;
+  tabelaProjetos('inv-tabela', lista, [
+    COL.projeto, COL.sec,
+    { r: 'Origem do recurso', v: p => p.origem, h: p => `<span class="avanco"><i style="width:10px;height:10px;border-radius:50%;background:${TIPOS_ORIGEM[tipoOrigem(p.origem)]};display:inline-block"></i>${p.origem ? esc(p.origem) : '<span style="color:var(--texto-3)">não informada</span>'}</span>` },
+    { ...COL.valor('Externo', p => p.externo), h: p => `<b>${p.externo ? fmtReal(p.externo) : '—'}</b>` },
+    COL.valor('Próprio', p => p.proprio), COL.valor('Melhoria', p => p.melhoria), COL.valor('Projetado', p => p.proj),
+    COL.sit
+  ], 'Nenhum projeto com recurso externo no filtro.');
   const semOrigem = lista.filter(p => p.externo > 0 && !p.origem);
   $('inv-nota').textContent = semOrigem.length ? `${semOrigem.length} projeto(s) com recurso externo (${fmtMi(soma(semOrigem, p => p.externo))}) sem "Origem Recurso Externo" preenchida na planilha.` : '';
 }
@@ -1376,12 +1643,12 @@ function renderPrazos(d) {
   const parados = comData.filter(x => x.n > 90).length;
 
   $('prz-kpis').innerHTML =
-    kpiHtml('k1', 'capacete', 'Em andamento', andamento.length, `${comData.length} com datas registradas`) +
-    kpiHtml('k5', 'relogio', 'Tempo médio em andamento', totais.length ? media(totais.map(x => x.total)) + ' dias' : '—', 'desde a autorização') +
-    kpiHtml('k6', 'calendario', 'Maior tempo em andamento', maior ? maior.total + ' dias' : '—', maior ? esc(corta(maior.p.titulo, 30)) : 'sem dados no filtro') +
-    kpiHtml('k7', 'alertaB', 'Na mesma etapa há +90 dias', parados, 'obras com datas registradas') +
-    kpiHtml('k3', 'maos', 'Aguardando emenda', aguard.length, fmtMi(soma(aguard, p => p.externo)) + ' previstos') +
-    kpiHtml('k4', 'lista', 'Pendências de cadastro', pend.length, `${soma(pend, x => x.f.length)} ocorrência(s) na planilha`);
+    kpiHtml('kn', 'capacete', 'Em andamento', andamento.length, `${comData.length} com datas registradas`) +
+    kpiHtml('kn2', 'relogio', 'Tempo médio em andamento', totais.length ? media(totais.map(x => x.total)) + ' dias' : '—', 'desde a autorização') +
+    kpiHtml('kn2', 'calendario', 'Maior tempo em andamento', maior ? maior.total + ' dias' : '—', maior ? esc(corta(maior.p.titulo, 30)) : 'sem dados no filtro') +
+    kpiHtml('kal', 'alertaB', 'Na mesma etapa há +90 dias', parados, 'obras com datas registradas') +
+    kpiHtml('ks-aguard', 'maos', 'Aguardando emenda', aguard.length, fmtMi(soma(aguard, p => p.externo)) + ' previstos', filtra('sit', 'Aguardando emenda')) +
+    kpiHtml('kc', 'lista', 'Pendências de cadastro', pend.length, `${soma(pend, x => x.f.length)} ocorrência(s) na planilha`);
 
   // Tempo na etapa atual
   $('prz-leg').innerHTML = FAIXAS.map(f => `<span><i style="background:${f.c}"></i>${f.r}</span>`).join('');
@@ -1390,8 +1657,8 @@ function renderPrazos(d) {
     const rotulo = rotulador(comData.map(x => x.p));
     const max = Math.max(...comData.map(x => x.n), 1);
     $('prz-etapa').innerHTML = `<div class="secs grupo">${comData.map(x => `
-      <div class="nome" title="${esc(x.p.titulo + (x.p.detalhe ? ' — ' + x.p.detalhe : '') + '\nSituação: ' + x.p.situacao)}">${esc(corta(rotulo(x.p), 38))} <span style="color:var(--texto-3)">· ${esc(x.p.sec)}</span></div>
-      <div class="trilho" style="cursor:default"><span style="width:calc(${x.n / max} * (100% - 210px));background:${faixaDe(x.n).c}"></span><em><b>${x.n} dias</b> desde a ${x.etapa} (${fmtData(x.desde)})</em></div>`).join('')}</div>`;
+      <div class="nome" ${abre(x.p)} title="${esc(x.p.titulo + (x.p.detalhe ? ' — ' + x.p.detalhe : '') + '\nSituação: ' + x.p.situacao)}">${esc(corta(rotulo(x.p), 38))} <span style="color:var(--texto-3)">· ${esc(x.p.sec)}</span></div>
+      <div class="trilho" data-pid="${x.p.id}"><span style="width:calc(${x.n / max} * (100% - 210px));background:${faixaDe(x.n).c}"></span><em><b>${x.n} dias</b> desde a ${x.etapa} (${fmtData(x.desde)})</em></div>`).join('')}</div>`;
   }
 
   // Faixas desde a autorização
@@ -1422,8 +1689,8 @@ function renderPrazos(d) {
     const ord = aguard.slice().sort((a, b) => b.externo - a.externo);
     $('prz-aguard').innerHTML = `<div class="tabela-wrap" style="max-height:330px"><table>
       <thead><tr><th style="cursor:default">Projeto</th><th style="cursor:default">Origem prevista</th><th class="num" style="cursor:default">Externo</th><th class="num" style="cursor:default">Contrapartida</th></tr></thead>
-      <tbody>${ord.map(p => `<tr>
-        <td class="proj" title="${esc(p.titulo + (p.detalhe ? '\n' + p.detalhe : ''))}"><b>${esc(rotulo(p))}</b><small>${esc(p.sec)}${p.ano !== 'Sem ano' ? ' · ' + p.ano : ''}</small></td>
+      <tbody>${ord.map(p => `<tr ${abre(p)}>
+        <td class="proj"><b>${esc(rotulo(p))}</b><small>${esc(p.sec)}${p.ano !== 'Sem ano' ? ' · ' + p.ano : ''}</small></td>
         <td>${p.origem ? esc(p.origem) : '<span style="color:var(--texto-3)">não informada</span>'}</td>
         <td class="num">${p.externo ? fmtReal(p.externo) : '—'}</td>
         <td class="num">${p.proprio + p.melhoria ? fmtReal(p.proprio + p.melhoria) : '—'}</td></tr>`).join('')}</tbody></table></div>
@@ -1433,15 +1700,13 @@ function renderPrazos(d) {
   // Tabela de pendências por projeto
   const sel = CHECAGENS.find(c => c.k === pendSel);
   const linhas = (sel ? pend.filter(x => x.f.includes(sel)) : pend).sort((a, b) => b.f.length - a.f.length || b.p.proj - a.p.proj);
-  $('prz-tab-titulo').innerHTML = sel ? `Pendências por Projeto <small>(${esc(sel.r)})</small>` : 'Pendências por Projeto';
+  const pendDe = new Map(linhas.map(x => [x.p, x.f]));
+  $('prz-tab-titulo').innerHTML = `Pendências por Projeto ${sel ? `<small>(${esc(sel.r)})</small> ` : ''}<small data-conta="prz-tabela"></small>`;
   $('prz-limpar').hidden = !sel;
-  $('prz-tabela').innerHTML = `<thead><tr>${['Projeto / Ação', 'Secretaria', 'Valor Projetado', 'Situação', 'Pendências'].map((r, i) => `<th style="cursor:default" class="${i === 2 ? 'num' : ''}">${r}</th>`).join('')}</tr></thead>
-    <tbody>${linhas.map(({ p, f }) => `<tr>
-      <td class="proj" title="${esc(p.titulo + (p.detalhe ? '\n' + p.detalhe : ''))}"><b>${esc(p.titulo)}</b>${p.detalhe ? `<small>${esc(p.detalhe)}</small>` : ''}</td>
-      <td class="cen">${p.sec === 'Não informada' ? '—' : esc(p.sec)}</td>
-      <td class="num">${p.proj ? fmtReal(p.proj) : '—'}</td>
-      <td class="cen"><span class="pilula" style="background:${p.cor}${p.cor === '#cbd5e1' ? ';color:#334155' : ''}">${esc(p.situacao)}</span></td>
-      <td class="chips">${f.map(c => `<span class="chip">${esc(c.r)}</span>`).join('')}</td></tr>`).join('') || '<tr><td colspan="5" class="vazio">Nenhuma pendência de cadastro no filtro. 🎉</td></tr>'}</tbody>`;
+  tabelaProjetos('prz-tabela', linhas.map(x => x.p), [
+    COL.projeto, COL.sec, COL.valor('Valor Projetado', p => p.proj), COL.sit,
+    { r: 'Pendências', cls: 'chips', desc: true, v: p => pendDe.get(p).length, h: p => pendDe.get(p).map(c => `<span class="chip">${esc(c.r)}</span>`).join(''), csv: p => pendDe.get(p).map(c => c.r).join(' | ') }
+  ], 'Nenhuma pendência de cadastro no filtro. 🎉');
 }
 
 /* =====================================================================
@@ -1450,6 +1715,7 @@ function renderPrazos(d) {
    Progresso físico pela coluna "Meta 25/28": m² (pavimentação), unidades (frota)
    ou, sem meta, contagem de iniciativas.
    ===================================================================== */
+const eixosFechados = new Set(), krsAbertos = new Set();   // estado de abre/fecha, mantido entre os filtros
 const CORES_EIXO = ['#1846b8', '#1f9d3a', '#8b4fd8', '#12a594', '#f0a91a', '#e04848', '#64748b'];
 // cores do Mapa Estratégico 2026/2029; demais eixos usam CORES_EIXO
 const corDoEixo = (nome, i) => { const n = normaliza(nome);
@@ -1520,53 +1786,55 @@ function renderMetas(d) {
   const nObj = todosObj.filter(o => !ni(o.nome)).length;
 
   $('met-kpis').innerHTML =
-    kpiHtml('k1', 'alvo', 'Eixos estratégicos', nEixos, `${nObj} objetivos estratégicos`) +
-    kpiHtml('k5', 'metas', 'Progresso dos objetivos', fmtPct(scoreMedio, 0), `concluído · + ${fmtPct(media(todosObj.filter(o => isFinite(o.score)).map(o => o.andamento)), 0)} em andamento`) +
-    kpiHtml('k4', 'cone', 'Pavimentação concluída', fmtNum(m2Real, 0) + ' m²', m2Meta ? `de ${fmtNum(m2Meta, 0)} m² (${fmtPct(m2Real / m2Meta, 0)})` : 'sem meta no filtro') +
-    kpiHtml('k3', 'caminhao', 'Frota entregue', unMeta ? `${fmtNum(unReal, 0)} de ${fmtNum(unMeta, 0)}` : '—', 'veículos e equipamentos') +
-    kpiHtml('k2', 'check', 'Iniciativas concluídas', `${concl.length} de ${d.length}`, fmtPct(d.length ? concl.length / d.length : NaN, 0) + ' do total') +
-    kpiHtml('k6', 'moedas', 'Investimento concluído', fmtMi(projConcl), fmtPct(totProj ? projConcl / totProj : NaN) + ' do projetado');
+    kpiHtml('kn', 'alvo', 'Eixos estratégicos', nEixos, `${nObj} objetivos estratégicos`) +
+    kpiHtml('ks-concl', 'metas', 'Progresso dos objetivos', fmtPct(scoreMedio, 0), `concluído · + ${fmtPct(media(todosObj.filter(o => isFinite(o.score)).map(o => o.andamento)), 0)} em andamento`) +
+    kpiHtml('kn2', 'cone', 'Pavimentação concluída', fmtNum(m2Real, 0) + ' m²', m2Meta ? `de ${fmtNum(m2Meta, 0)} m² (${fmtPct(m2Real / m2Meta, 0)})` : 'sem meta no filtro') +
+    kpiHtml('kn2', 'caminhao', 'Frota entregue', unMeta ? `${fmtNum(unReal, 0)} de ${fmtNum(unMeta, 0)}` : '—', 'veículos e equipamentos') +
+    kpiHtml('ks-concl', 'check', 'Iniciativas concluídas', `${concl.length} de ${d.length}`, fmtPct(d.length ? concl.length / d.length : NaN, 0) + ' do total') +
+    kpiHtml('ks-concl', 'moedas', 'Investimento concluído', fmtMi(projConcl), fmtPct(totProj ? projConcl / totProj : NaN) + ' do projetado');
 
-  const krHtml = k => {
+  const krHtml = (k, pai) => {
+    const id = pai + '|' + k.nome, ab = krsAbertos.has(id), rot = rotulador(k.ps);
     const f = v => k.total ? v / k.total * 100 : 0;
     const nota = k.semMeta ? ` · ${k.semMeta} sem meta` : '';
     return `<div class="kr">
-      <div class="nome" title="${esc(k.nome)}">${ni(k.nome) ? '<span style="color:var(--texto-3)">Título da ação não informado</span>' : esc(k.nome)}<small>${k.ps.length} iniciativa(s) · ${fmtMi(k.proj)}${nota}</small></div>
+      <div class="nome" title="${esc(k.nome)}">${ni(k.nome) ? '<span style="color:var(--texto-3)">Título da ação não informado</span>' : esc(k.nome)}<button class="ver-inis" data-kr="${esc(id)}" aria-expanded="${ab}" title="Clique para listar as iniciativas"><span class="chev">▸</span> ${k.ps.length} iniciativa(s) · ${fmtMi(k.proj)}${nota}</button></div>
       <div>
         <div class="prog" title="Concluído ${fmtQtd(k.real, k.u)} · Em execução ${fmtQtd(k.exec, k.u)} · Em licitação ${fmtQtd(k.lic, k.u)} · Meta ${fmtQtd(k.total, k.u)}">
           <span style="width:${f(k.real)}%;background:#1f9d3a"></span><span style="width:${f(k.exec)}%;background:#1e63d6"></span><span style="width:${f(k.lic)}%;background:#f0b323"></span>
         </div>
         <div class="num"><span><b>${fmtPct(k.total ? k.real / k.total : NaN, 0)}</b> · ${fmtQtd(k.real, k.u)} de ${fmtQtd(k.total, k.u)}</span><span>${[k.exec ? fmtPct(k.exec / k.total, 0) + ' em execução' : '', k.lic ? fmtPct(k.lic / k.total, 0) + ' em licitação' : ''].filter(Boolean).join(' · ')}</span></div>
-      </div></div>`;
+      </div>
+      <ul class="inis" ${ab ? '' : 'hidden'}>${k.ps.slice().sort((a, b) => a.ordem - b.ordem || b.proj - a.proj).map(p => `<li ${abre(p)}><i style="background:${p.cor}"></i><span>${esc(rot(p))}</span><em>${esc(p.situacao)}${p.avanco != null && p.avanco < 100 ? ' · ' + p.avanco + '%' : ''}${p.proj ? ' · ' + fmtMi(p.proj) : ''}</em></li>`).join('')}</ul></div>`;
   };
 
   // Cartões: um por eixo, com os objetivos estratégicos dentro
   $('met-objetivos').innerHTML = eixos.length ? eixos.map((e, i) => {
     const cor = ni(e.eixo) ? '#94a3b8' : corDoEixo(e.eixo, i);
-    const conc = e.ps.filter(p => p.situacao === 'Concluído').length;
+    const conc = e.ps.filter(p => p.situacao === 'Concluído').length, fe = eixosFechados.has(e.eixo);
     const objs = e.objetivos.map(o => `<div class="objetivo">
-        <div class="obj-cab"><b>${ni(o.nome) ? '<span style="color:var(--texto-3)">Objetivo não informado</span>' : esc(o.nome)}</b><span>${isFinite(o.score) ? Math.round(o.score * 100) + '% concluído' : '—'}${isFinite(o.andamento) ? `<em>${Math.round(o.andamento * 100)}% em andamento</em>` : ''}</span></div>
+        <div class="obj-cab"><b ${filtra('obj', o.nome)} title="Clique para filtrar por este objetivo">${ni(o.nome) ? '<span style="color:var(--texto-3)">Objetivo não informado</span>' : esc(o.nome)}</b><span>${isFinite(o.score) ? Math.round(o.score * 100) + '% concluído' : '—'}${isFinite(o.andamento) ? `<em>${Math.round(o.andamento * 100)}% em andamento</em>` : ''}</span></div>
         <small>${o.ps.length} iniciativa(s) · ${fmtMi(o.proj)}</small>
-        ${o.krs.map(krHtml).join('')}
+        ${o.krs.map(k => krHtml(k, e.eixo + '|' + o.nome)).join('')}
       </div>`).join('');
     return `<div class="card obj" style="--cor-eixo:${cor}">
-      <div class="obj-topo">${anel(e.score, cor)}<div><h2>${esc(e.eixo)}</h2>
-        <div class="meta-info"><b>${isFinite(e.score) ? Math.round(e.score * 100) + '% concluído' : '—'}</b>${isFinite(e.andamento) ? ` · ${Math.round(e.andamento * 100)}% em andamento` : ''} · ${e.objetivos.filter(o => !ni(o.nome)).length} objetivo(s) estratégico(s) · ${e.ps.length} iniciativas · ${conc} concluída(s) · ${fmtMi(e.proj)} projetados</div></div></div>
-      <div class="objs-grid">${objs}</div></div>`;
+      <div class="obj-topo">${anel(e.score, cor)}<div><h2 ${filtra('eixo', e.eixo)} title="Clique para filtrar por este eixo">${esc(e.eixo)}</h2>
+        <div class="meta-info"><b>${isFinite(e.score) ? Math.round(e.score * 100) + '% concluído' : '—'}</b>${isFinite(e.andamento) ? ` · ${Math.round(e.andamento * 100)}% em andamento` : ''} · ${e.objetivos.filter(o => !ni(o.nome)).length} objetivo(s) estratégico(s) · ${e.ps.length} iniciativas · ${conc} concluída(s) · ${fmtMi(e.proj)} projetados</div></div><button class="recolher" data-recolher="${esc(e.eixo)}" aria-expanded="${!fe}" aria-label="Recolher ou mostrar os objetivos deste eixo" title="Recolher ou mostrar os objetivos"><span class="chev">▸</span></button></div>
+      <div class="objs-grid" ${fe ? 'hidden' : ''}>${objs}</div></div>`;
   }).join('') : '<div class="card vazio">Nenhuma iniciativa no filtro.</div>';
 
   // Matriz eixo/objetivo × situação
   const sits = [...new Set(TODOS.map(p => p.situacao))].sort((a, b) => ordemDe(a) - ordemDe(b));
   const max = Math.max(1, ...todosObj.flatMap(o => sits.map(s => o.ps.filter(p => p.situacao === s).length)));
   const hex2rgba = (h, a) => `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`;
-  const celulas = ps => sits.map(s => {
+  const celulas = (ps, k, v) => sits.map(s => {
     const n = ps.filter(p => p.situacao === s).length;
-    return `<td class="cel ${n ? '' : 'zero'}" style="${n ? `background:${hex2rgba(corDe(s), 0.12 + 0.55 * Math.min(1, n / max))}` : ''}">${n || '·'}</td>`;
+    return `<td class="cel ${n ? '' : 'zero'}" ${n ? `${filtra(k, v)} data-f2="sit" data-v2="${esc(s)}" title="Clique para ver só estes ${n}"` : ''} style="${n ? `background:${hex2rgba(corDe(s), 0.12 + 0.55 * Math.min(1, n / max))}` : ''}">${n || '·'}</td>`;
   }).join('');
   $('met-matriz').className = 'matriz';
   $('met-matriz').innerHTML = `<thead><tr><th style="cursor:default">Eixo / objetivo estratégico</th>${sits.map(s => `<th style="cursor:default;text-align:center">${esc(s)}</th>`).join('')}<th class="num" style="cursor:default">Total</th><th class="num" style="cursor:default">Projetado</th></tr></thead>
-    <tbody>${eixos.map(e => `<tr class="grupo"><td><b>${esc(e.eixo)}</b></td>${celulas(e.ps)}<td class="num"><b>${e.ps.length}</b></td><td class="num"><b>${fmtMi(e.proj)}</b></td></tr>` +
-      e.objetivos.map(o => `<tr><td class="sub">${ni(o.nome) ? 'Objetivo não informado' : esc(o.nome)}</td>${celulas(o.ps)}<td class="num">${o.ps.length}</td><td class="num">${fmtMi(o.proj)}</td></tr>`).join('')).join('')}</tbody>`;
+    <tbody>${eixos.map(e => `<tr class="grupo"><td ${filtra('eixo', e.eixo)}><b>${esc(e.eixo)}</b></td>${celulas(e.ps, 'eixo', e.eixo)}<td class="num"><b>${e.ps.length}</b></td><td class="num"><b>${fmtMi(e.proj)}</b></td></tr>` +
+      e.objetivos.map(o => `<tr><td class="sub" ${filtra('obj', o.nome)}>${ni(o.nome) ? 'Objetivo não informado' : esc(o.nome)}</td>${celulas(o.ps, 'obj', o.nome)}<td class="num">${o.ps.length}</td><td class="num">${fmtMi(o.proj)}</td></tr>`).join('')).join('')}</tbody>`;
 
   // Nomes parecidos (provável erro de digitação na planilha)
   const sem = x => chave(x).replace(/s/g, '');
@@ -1575,6 +1843,133 @@ function renderMetas(d) {
   $('met-nota').innerHTML = 'Concluído = obras concluídas (100%) + execução física das obras em execução (coluna % da planilha); demais situações contam 0%. Em m², unidades ou nº de iniciativas. Em andamento = parte ainda não executada das obras em execução e em licitação. Progresso do objetivo = média dos títulos de ação; do eixo = média dos objetivos. Barras: <span style="color:#1f9d3a">■</span> concluído · <span style="color:#1e63d6">■</span> em execução · <span style="color:#d89a0c">■</span> em licitação.' +
     (pe.length || po.length ? ` <br>Atenção: nomes parecidos na planilha aparecem separados — ${[...pe, ...po].map(x => '“' + esc(x) + '”').join(', ')}.` : '');
 }
+
+/* =====================================================================
+   Detalhe do projeto (painel lateral) — abre ao clicar em qualquer elemento com data-pid
+   ===================================================================== */
+let focoAntes = null;
+function abrirDetalhe(id, origemFoco) {
+  const p = TODOS.find(x => x.id === id);
+  if (!p) return;
+  esconderDica();
+  const hoje = hojeUTC();
+  const ni = v => !v || /^(Não informad[oa]|Sem ano)$/.test(v) ? '<span style="color:var(--texto-3);font-weight:400">não informado</span>' : esc(v);
+
+  // valores
+  const eco = p.lic != null ? economia(p) : null;
+  const valores = `<div class="gav-val">
+    <div><small>Valor projetado</small><b>${p.proj ? fmtReal(p.proj) : '—'}</b></div>
+    <div><small>Valor licitado</small><b>${fmtReal(p.lic)}</b></div>
+    <div class="${eco > 0 ? 'pos' : eco < 0 ? 'neg' : ''}"><small>${eco < 0 ? 'Acima do projetado' : 'Economia na licitação'}</small><b>${eco == null ? '—' : fmtReal(Math.abs(eco))}</b></div></div>`;
+
+  // fontes de recurso
+  const partes = FONTES.map(f => ({ ...f, v: f.k === 'semFonte' ? semFonte(p) : p[f.k] })).filter(x => x.v > 0);
+  const tot = soma(partes, x => x.v);
+  const fontes = tot ? `<div class="comp fina">${partes.map(x => `<span style="width:${x.v / tot * 100}%;background:${x.c};color:${corTexto(x.c)}" title="${x.r}: ${fmtReal(x.v)} (${fmtPct(x.v / tot)})">${x.v / tot >= 0.12 ? fmtPct(x.v / tot, 0) : ''}</span>`).join('')}</div>
+    <div class="fontes-leg">${partes.map(x => `<span><i style="background:${x.c}"></i>${x.r} <b>${fmtReal(x.v)}</b></span>`).join('')}</div>` : '<div class="gav-desc" style="color:var(--texto-3)">Sem valor projetado na planilha.</div>';
+  const origemTxt = p.origem || p.externo > 0 ? `<dl class="gav-lista" style="margin-top:.5rem"><dt>Origem do recurso externo</dt><dd>${ni(p.origem)}</dd></dl>` : '';
+
+  // linha do tempo
+  const marcos = [['Autorização', p.dtAut], ['Edital', p.dtEdital], ['Licitação', p.dtLic], ['Entrega', p.dtEnt]];
+  let ant = null;
+  let linhaTempo = marcos.map(([r, dt], i) => {
+    const desde = dt && ant ? `+${dias(ant, dt)} dias` : '';
+    if (dt) ant = dt;
+    return `<li class="${dt ? 'feito' : ''} ${i === 3 ? 'ent' : ''}"><i></i><span><b>${r}</b>${dt ? fmtData(dt) : 'sem data'}</span><em>${desde}</em></li>`;
+  }).join('');
+  if (ant && emAndamento(p)) linhaTempo += `<li class="hoje"><i></i><span><b>Hoje</b>em andamento</span><em>${dias(ant, hoje)} dias na etapa atual</em></li>`;
+  const totalDias = p.dtAut && (p.dtEnt || emAndamento(p)) ? `<div class="nota">${dias(p.dtAut, p.dtEnt || hoje)} dias desde a autorização${p.dtEnt ? ' até a entrega' : ' (em curso)'}.</div>` : '';
+
+  // execução física
+  const fisico = p.avanco != null
+    ? `<div class="gav-fis"><div class="barra"><span style="width:${p.avanco}%"></span></div><b>${p.avanco}%</b></div>`
+    : `<div class="gav-desc" style="color:var(--texto-3)">${p.situacao === 'Em execução' ? 'Em execução, mas sem % informado na planilha.' : 'Sem percentual nesta situação (só obras em execução ou concluídas).'}</div>`;
+
+  const pend = CHECAGENS.filter(c => c.t(p));
+  $('gaveta').innerHTML = `
+    <div class="gav-topo">
+      <div><span class="pilula" style="background:${p.cor}${p.cor === '#cbd5e1' ? ';color:#334155' : ''};max-width:none">${esc(p.situacao)}</span>
+        <h2>${esc(p.titulo)}</h2></div>
+      <button class="gav-fechar" id="gav-fechar" aria-label="Fechar detalhe">×</button>
+    </div>
+    <div class="gav-corpo">
+      ${p.detalhe ? `<section><h3>Descrição</h3><p class="gav-desc">${esc(p.descricao.split(/\r?\n/).slice(1).join('\n').trim() || p.detalhe)}</p></section>` : ''}
+      <section><h3>Valores</h3>${valores}</section>
+      <section><h3>Fontes de recurso</h3>${fontes}${origemTxt}</section>
+      <section><h3>Linha do tempo</h3><ol class="marcos">${linhaTempo}</ol>${totalDias}</section>
+      <section><h3>Execução física</h3>${fisico}</section>
+      <section><h3>Classificação</h3><dl class="gav-lista">
+        <dt>Secretaria</dt><dd>${ni(NOMES_SECRETARIA[p.sec] || p.sec)}</dd>
+        <dt>Eixo estratégico</dt><dd>${ni(p.eixo)}</dd>
+        <dt>Objetivo estratégico</dt><dd>${ni(p.objetivo)}</dd>
+        <dt>Título da ação</dt><dd>${ni(p.acaoTitulo)}</dd>
+        <dt>Comunidade</dt><dd>${ni(p.comunidade)}</dd>
+        <dt>Ano de início</dt><dd>${ni(p.ano)}</dd>
+        ${p.meta > 0 ? `<dt>Meta 25/28</dt><dd>${fmtNum(p.meta, Number.isInteger(p.meta) ? 0 : 2)}</dd>` : ''}
+      </dl></section>
+      <section><h3>Pendências de cadastro</h3>${pend.length ? pend.map(c => `<span class="chip">${esc(c.r)}</span>`).join('') : '<span class="gav-ok">✓ Cadastro completo</span>'}</section>
+    </div>`;
+  if (!$('gaveta').classList.contains('aberta')) focoAntes = origemFoco || document.activeElement;
+  $('gaveta').inert = false;
+  $('gaveta').classList.add('aberta');
+  $('gaveta-fundo').classList.add('aberta');
+  $('gav-fechar').onclick = fecharDetalhe;
+  $('gav-fechar').focus({ preventScroll: true });
+}
+function fecharDetalhe() {
+  if (!$('gaveta').classList.contains('aberta')) return;
+  $('gaveta').classList.remove('aberta');
+  $('gaveta-fundo').classList.remove('aberta');
+  $('gaveta').inert = true;
+  if (focoAntes && focoAntes.isConnected && focoAntes.focus) focoAntes.focus({ preventScroll: true });
+  focoAntes = null;
+}
+$('gaveta-fundo').onclick = fecharDetalhe;
+
+/* =====================================================================
+   Dica: substitui o title nativo. Mouse = acompanha o ponteiro; toque = aparece ao tocar.
+   O texto vem do atributo title (ou do <title> dos gráficos), movido para data-dica na primeira vez.
+   ===================================================================== */
+let dicaTimer = null;
+function textoDica(alvo) {
+  for (let el = alvo; el && el.nodeType === 1; el = el.parentNode) {
+    if (el.hasAttribute('title')) { el.dataset.dica = el.getAttribute('title'); el.removeAttribute('title'); }
+    else if (el instanceof SVGElement) {
+      const t = [...el.children].find(c => c.tagName === 'title');
+      if (t) { el.dataset.dica = t.textContent; t.remove(); }
+    }
+    if (el.dataset.dica) return el.dataset.dica;
+  }
+  return '';
+}
+function mostrarDica(txt, x, y) {
+  const d = $('dica');
+  if (d.textContent !== txt) d.textContent = txt;
+  d.hidden = false;
+  const r = d.getBoundingClientRect();
+  let l = x + 14, t = y + 18;
+  if (l + r.width > innerWidth - 8) l = Math.max(8, x - r.width - 12);
+  if (t + r.height > innerHeight - 8) t = Math.max(8, y - r.height - 12);
+  d.style.left = l + 'px'; d.style.top = t + 'px';
+}
+function esconderDica() { clearTimeout(dicaTimer); $('dica').hidden = true; }
+document.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const txt = textoDica(e.target);
+  txt ? mostrarDica(txt, e.clientX, e.clientY) : esconderDica();
+});
+document.addEventListener('pointerdown', e => {
+  esconderDica();
+  if (e.pointerType === 'mouse') return;
+  // no toque, o que é clicável executa a ação; a dica fica para o restante (e para os "i" de informação)
+  if (!e.target.closest('.info') && e.target.closest('[data-f], [data-pid], button, select, input, a')) return;
+  const txt = textoDica(e.target);
+  if (!txt) return;
+  mostrarDica(txt, e.clientX, e.clientY);
+  dicaTimer = setTimeout(esconderDica, 6000);
+});
+document.addEventListener('scroll', esconderDica, true);
+document.documentElement.addEventListener('mouseleave', esconderDica);
 
 /* =====================================================================
    Conexão com o arquivo (somente leitura)
@@ -1595,25 +1990,26 @@ const memoria = {
 function carregar(buf, nome, versao) {
   TODOS = lerPlanilha(buf);
   ultimaVersao = versao;
+  fecharDetalhe();
   montarFiltros();
   renderizar();
   $('sobrepor').classList.remove('visivel');
   statusOk(nome);
 }
 function statusOk(nome) {
-  status(`<b>Fonte:</b> ${esc(nome)}<br><span class="ok">● ${TODOS.length} projetos · lido às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>`);
+  status(`<b>Fonte:</b> <span class="nm">${esc(nome)}</span><br><span class="ok">● ${TODOS.length} projetos · lido às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>`);
 }
 function status(html) {
   const botoes = origem === 'http' ? '<button data-a="atualizar">Atualizar</button>'
     : `${handle || origem === 'web' ? '<button data-a="atualizar">Atualizar</button>' : ''}<button data-a="trocar">${origem === 'web' ? 'Trocar fonte' : 'Trocar arquivo'}</button>`;
-  $('fonte').innerHTML = `${html}<div class="acoes">${botoes}</div>`;
+  $('fonte').innerHTML = `<div class="txt">${html}</div><div class="acoes">${botoes}</div>`;
   $('fonte').querySelectorAll('button').forEach(b => b.onclick = () => b.dataset.a === 'atualizar' ? verificar(true) : mostrarConexao());
 }
 function erro(e, ondeMostrar = 'fonte') {
   console.error(e);
   const msg = e && e.name === 'NotReadableError' ? 'Arquivo indisponível no momento (pode estar sendo salvo). Nova tentativa em instantes.' : (e.message || String(e));
   if (ondeMostrar === 'conexao' || !TODOS.length) { $('erro-conexao').textContent = msg; mostrarConexao(); }
-  else status(`<b>Fonte:</b> ${esc(origem === 'web' ? NOME_WEB : handle ? handle.name : CONFIG.arquivoPadrao)}<br><span class="aviso">● ${esc(msg)}</span>`);
+  else status(`<b>Fonte:</b> <span class="nm">${esc(origem === 'web' ? NOME_WEB : handle ? handle.name : CONFIG.arquivoPadrao)}</span><br><span class="aviso">● ${esc(msg)}</span>`);
 }
 
 // Lê o .xlsx publicado pelo Google. Compara o conteúdo já interpretado (o .xlsx gerado
