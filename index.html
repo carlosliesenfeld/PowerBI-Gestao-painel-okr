@@ -364,9 +364,54 @@
   #situacao svg, #evolucao svg, #inv-ano svg, .obj-topo svg { animation: surgir .45s ease-out; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
+  .imprimir + .imprimir { margin-top: .375rem; }
   .imprimir { margin-top: .625rem; width: 100%; border: 1px solid rgba(255,255,255,.35); background: none; color: #fff; padding: .4375rem .625rem; border-radius: .375rem; cursor: pointer; font-size: max(11px, .8125rem); }
   .imprimir:hover { background: rgba(255,255,255,.12); }
   .so-impressao { display: none; }
+
+  /* ---------- Variação nos cartões e cartão "O que mudou" ---------- */
+  .var { display: inline-block; margin-left: .375rem; padding: 0 .4375rem; border-radius: .75rem; font-weight: 700; white-space: nowrap; background: rgba(255,255,255,.24); }
+  .kpi.kf3 .var { background: rgba(11,31,69,.14); }
+  .mud-resumo { display: flex; flex-wrap: wrap; gap: .375rem .5rem; margin: .25rem 0 .375rem; }
+  .mud-resumo span { background: #eef2f8; border-radius: .75rem; padding: .125rem .625rem; font-size: max(11px, .8125rem); color: var(--texto-2); }
+  .mud-resumo b { color: var(--navy-800); }
+  .mud { list-style: none; margin: 0; padding: 0; max-height: 18rem; overflow: auto; }
+  .mud li { display: grid; grid-template-columns: minmax(10rem, 1fr) 2fr; gap: .75rem; align-items: center; padding: .375rem .5rem; border-bottom: 1px solid #e8edf4; font-size: max(11px, .875rem); }
+  .mud li[data-pid]:hover { background: #e3ecfb; }
+  .mud li > b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .mud li.rem > b { color: var(--texto-3); text-decoration: line-through; }
+  .mud .pilula { min-width: 0; max-width: none; white-space: nowrap; }
+  .mud .frag { display: inline-block; margin: 1px .75rem 1px 0; }
+  .chip.novo { background: #e3f5e8; color: #1a7f33; }
+  .rot-mini { font-size: max(11px, .8125rem); color: var(--texto-2); white-space: nowrap; }
+
+  /* ---------- Cronograma: período e agrupamento ---------- */
+  .gantt-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem .75rem; margin-bottom: .5rem; font-size: max(11px, .8125rem); color: var(--texto-2); }
+  .seg { display: inline-flex; border: 1px solid var(--borda); border-radius: .375rem; overflow: hidden; }
+  .seg button { border: 0; background: #fff; color: var(--texto); padding: .25rem .625rem; cursor: pointer; font-size: inherit; border-right: 1px solid var(--borda); }
+  .seg button:last-child { border-right: 0; }
+  .seg button:hover { background: #f1f5fb; }
+  .seg button.ativo { background: var(--azul); color: #fff; }
+  .chk { display: inline-flex; align-items: center; gap: .375rem; cursor: pointer; }
+
+  /* ---------- Modo apresentação (TV / reunião) ---------- */
+  body.apresentando .lateral, body.apresentando .filtros { display: none; }
+  body.apresentando .corpo { grid-template-columns: 1fr; }
+  body.apresentando .topo, body.apresentando .conteudo { grid-column: 1; }
+  body.apresentando .topo::before { display: none; }
+  body.apresentando .brasao-topo { display: block; flex: none; width: 4.75rem; height: 4.75rem; object-fit: contain; }
+  body.apresentando .titulo p.municipio { display: block; }
+  body.apresentando.ocioso { cursor: none; }
+  .tv-progresso { position: fixed; left: 0; right: 0; top: 0; height: .25rem; z-index: 12; background: rgba(255,255,255,.18); }
+  .tv-progresso span { display: block; height: 100%; width: 0; background: var(--ambar); }
+  .tv-barra { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); z-index: 12; display: flex; align-items: center; gap: .5rem; max-width: calc(100% - 1rem);
+    background: rgba(11,31,69,.94); color: #fff; padding: .5rem .875rem; border-radius: 2rem; box-shadow: 0 .5rem 1.75rem rgba(0,0,0,.35); transition: opacity .3s; font-size: max(12px, .9375rem); white-space: nowrap; }
+  .tv-barra.oculta { opacity: 0; pointer-events: none; }
+  .tv-barra button { border: 0; border-radius: 1.25rem; background: rgba(255,255,255,.14); color: #fff; min-width: 2.25rem; height: 2.25rem; padding: 0 .75rem; cursor: pointer; font-size: inherit; }
+  .tv-barra button:hover { background: rgba(255,255,255,.28); }
+  .tv-barra button.sair { background: var(--ambar); color: var(--navy-900); font-weight: 700; }
+  .tv-barra select { height: 2.25rem; border: 0; border-radius: 1.25rem; padding: 0 .5rem; background: #fff; color: var(--texto); font-size: inherit; }
+  .tv-barra #tv-pg { min-width: 11rem; text-align: center; }
 
   /* ---------- Dica (substitui o title; funciona com mouse e toque) ---------- */
   .dica { position: fixed; z-index: 30; left: 0; top: 0; max-width: 24rem; pointer-events: none; white-space: pre-line;
@@ -468,6 +513,7 @@
     .kpi .val, .kpis .kpi:first-child .val { font-size: 1.0625rem; }
     .kpi .rot, .kpi .sub { font-size: max(11px, .75rem); }
     .gav-val { grid-template-columns: 1fr 1fr; }
+    .mud li { grid-template-columns: 1fr; gap: .125rem; }
     .menu { flex-direction: row; overflow-x: auto; }
     .menu button { white-space: nowrap; font-size: .875rem; padding: .5rem .625rem; }
     .menu button br { display: none; }
@@ -489,7 +535,7 @@
     html { font-size: 11px; }
     body { background: #fff; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; animation: none !important; }
-    .lateral, .filtros, .tab-acoes, .gaveta, .gaveta-fundo, .dica, .nova-versao, .sobrepor, .recolher, .ativos .limpar, .ativos .tag b { display: none !important; }
+    .tv-barra, .tv-progresso, .gantt-ctrl, .lateral, .filtros, .tab-acoes, .gaveta, .gaveta-fundo, .dica, .nova-versao, .sobrepor, .recolher, .ativos .limpar, .ativos .tag b { display: none !important; }
     .corpo { display: block; min-height: 0; }
     .topo { position: static; min-height: 0; padding: .625rem 1rem; }
     .topo::before { display: none; }
@@ -537,6 +583,7 @@
     </div>
     <ul class="menu" id="menu"></ul>
     <div class="fonte" id="fonte">Nenhuma planilha conectada.</div>
+    <button class="imprimir" id="btn-apresentar" title="Tela cheia, sem menu. Começa parado na página atual; o botão ▶ liga a troca automática de página. Esc para sair.">Modo apresentação</button>
     <button class="imprimir" id="btn-imprimir" title="Imprime a página atual, com os filtros aplicados. Na janela de impressão, escolha “Salvar como PDF”.">Imprimir / PDF</button>
     <div class="versao">Painel · Versão 2.0</div>
   </nav>
@@ -569,6 +616,14 @@
       </div>
       <div class="card"><h2>Indicadores da Gestão (OKRs)</h2><div class="okrs" id="okrs"></div></div>
     </section>
+
+    <section class="card">
+      <div class="tab-topo">
+        <h2>O que mudou <small id="mud-desde"></small></h2>
+        <label class="tab-acoes rot-mini" id="mud-base-rot" hidden>Comparar com a leitura de <select class="busca" id="mud-base" style="width:auto"></select></label>
+      </div>
+      <div id="mudancas"></div>
+    </section>
   </main>
 
   <main class="conteudo" id="pagina-obras" hidden>
@@ -578,6 +633,7 @@
       <div class="card"><h2>Funil das Etapas <small>(projetos com marco registrado)</small></h2><div id="obras-funil"></div></div>
       <div class="card">
         <h2>Cronograma das Obras <small>(Autorização → Entrega)</small></h2>
+        <div class="gantt-ctrl" id="gantt-ctrl"></div>
         <div class="gantt-leg">
           <span><i style="background:#8b4fd8"></i>Preparação (aut. → edital)</span>
           <span><i style="background:#f0a91a"></i>Licitação (edital → licitação)</span>
@@ -656,6 +712,17 @@
 
 </div>
 
+<div class="tv-progresso" id="tv-progresso" hidden><span></span></div>
+<div class="tv-barra" id="tv-barra" hidden>
+  <button data-tv="ant" aria-label="Página anterior" title="Página anterior (←)">◀</button>
+  <button data-tv="pausa" id="tv-pausa" aria-label="Pausar ou continuar" title="Pausar / continuar (espaço)">❚❚</button>
+  <button data-tv="prox" aria-label="Próxima página" title="Próxima página (→)">▶</button>
+  <span id="tv-pg"></span>
+  <select id="tv-seg" aria-label="Tempo por tela" title="Tempo por tela (páginas longas rolam sozinhas e ficam mais tempo)">
+    <option value="10">10 s</option><option value="20">20 s</option><option value="30">30 s</option><option value="60">1 min</option><option value="120">2 min</option>
+  </select>
+  <button class="sair" data-tv="sair" title="Sair (Esc)">Sair</button>
+</div>
 <div class="dica" id="dica" role="tooltip" hidden></div>
 <div class="gaveta-fundo" id="gaveta-fundo"></div>
 <aside class="gaveta" id="gaveta" role="dialog" aria-modal="true" aria-label="Detalhe do projeto" inert></aside>
@@ -690,7 +757,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-10 10:03';
+const VERSAO_PAINEL = '2026-11-10 12:07';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -907,6 +974,9 @@ const CAMPO_FILTRO = {
 const FILTROS_SEL = ['ano', 'sec', 'eixo', 'sit'];
 const filtros = Object.fromEntries(Object.keys(CAMPO_FILTRO).map(k => [k, '']));
 let paginaAtual = 'resumo';
+// modo apresentação: seg = tempo por tela; t = tempo decorrido na página atual
+const tv = { ativo: false, seg: 20, pausado: false, cheia: false, t: 0, ultimo: 0, raf: 0, ocioso: 0 };
+let tvInicial = null;   // "tv=20" no endereço abre já em apresentação (útil para TV/quiosque)
 
 function opcoes(sel, valores, desejado) {
   sel.innerHTML = '<option value="">Todos</option>' + valores.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
@@ -926,10 +996,12 @@ function montarFiltros() {
 const ordemDe = rot => (Object.values(SITUACOES).find(s => s.rotulo === rot) || { ordem: 8 }).ordem;
 const corDe = rot => (Object.values(SITUACOES).find(s => s.rotulo === rot) || { cor: '#94a3b8' }).cor;
 
-function filtrados() {
+// aplica os filtros ativos a uma lista de projetos (a atual ou a de uma leitura anterior)
+function aplicaFiltros(lista) {
   const ativos = Object.keys(filtros).filter(k => filtros[k]);
-  return TODOS.filter(p => ativos.every(k => CAMPO_FILTRO[k].v(p) === filtros[k]));
+  return lista.filter(p => ativos.every(k => CAMPO_FILTRO[k].v(p) === filtros[k]));
 }
+const filtrados = () => aplicaFiltros(TODOS);
 function porFiltro(k, v) {
   filtros[k] = v;
   if ($('f-' + k)) $('f-' + k).value = v;
@@ -953,11 +1025,13 @@ function lerHash() {
   const [pg, qs] = location.hash.slice(1).split('?');
   const q = new URLSearchParams(qs || '');
   for (const k of Object.keys(filtros)) filtros[k] = q.get(k) || '';
+  if (tvInicial === null) tvInicial = Math.max(0, +q.get('tv') || 0);
   return pg;
 }
 function gravarHash() {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(filtros)) if (v) q.set(k, v);
+  if (tv.ativo) q.set('tv', tv.seg);
   const s = q.toString();
   history.replaceState(null, '', '#' + paginaAtual + (s ? '?' + s : ''));
 }
@@ -981,6 +1055,8 @@ window.addEventListener('hashchange', () => {
 
 // Clique geral: etiquetas de filtro, elementos que filtram (data-f) e elementos que abrem o detalhe (data-pid)
 document.addEventListener('click', e => {
+  const gp = e.target.closest('[data-gp]');
+  if (gp) { ganttPeriodo = gp.dataset.gp; return renderGantt(filtrados()); }
   const rc = e.target.closest('[data-recolher], [data-kr]');
   if (rc) {   // Metas: recolhe o eixo ou lista as iniciativas, sem redesenhar a página
     const eixo = rc.dataset.recolher != null, conj = eixo ? eixosFechados : krsAbertos, k = eixo ? rc.dataset.recolher : rc.dataset.kr;
@@ -1018,13 +1094,17 @@ document.addEventListener('input', e => {
   const id = e.target.dataset && e.target.dataset.busca;
   if (id && TABELAS[id]) { TABELAS[id].q = e.target.value; desenharTabela(id); }
 });
+document.addEventListener('change', e => {
+  if (e.target.id === 'gantt-grupo') { ganttGrupo = e.target.checked; renderGantt(filtrados()); }
+  if (e.target.id === 'mud-base') { baseTs = +e.target.value; renderizar(); }
+});
 $('btn-imprimir').onclick = () => window.print();
 window.addEventListener('beforeprint', () => {
   const pg = PAGINAS.find(p => p.id === paginaAtual).rotulo.replace('<br>', ' ');
   $('impresso').textContent = `${pg} · ${TODOS.length ? filtrados().length + ' de ' + TODOS.length + ' projetos · ' : ''}gerado em ${new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`;
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') return fecharDetalhe();
+  if (e.key === 'Escape') return $('gaveta').classList.contains('aberta') ? fecharDetalhe() : sairApresentacao();
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[data-f]:not(button), [data-pid]')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
 });
 
@@ -1033,17 +1113,19 @@ document.addEventListener('keydown', e => {
    ===================================================================== */
 const soma = (arr, f) => arr.reduce((s, p) => s + (f(p) || 0), 0);
 
+const totais = d => ({
+  proj: soma(d, p => p.proj), proprio: soma(d, p => p.proprio), melhoria: soma(d, p => p.melhoria),
+  externo: soma(d, p => p.externo), lic: soma(d, p => p.lic),
+  dif: soma(d, p => p.dif != null ? p.dif : (p.lic != null ? p.proj - p.lic : 0))
+});
+
 function renderizar() {
   document.querySelectorAll('.filtro select').forEach(s => s.classList.toggle('ativo', !!s.value));
   renderAtivos();
   gravarHash();
   const d = filtrados();
-  const t = {
-    proj: soma(d, p => p.proj), proprio: soma(d, p => p.proprio), melhoria: soma(d, p => p.melhoria),
-    externo: soma(d, p => p.externo), lic: soma(d, p => p.lic),
-    dif: soma(d, p => p.dif != null ? p.dif : (p.lic != null ? p.proj - p.lic : 0))
-  };
-  renderKpis(t);
+  const t = totais(d), b = leituraBase();
+  renderKpis(t, b ? totais(aplicaFiltros(b.dados)) : null, b);
   renderSituacao(d);
   renderExecucao(t);
   renderComposicao(t);
@@ -1051,6 +1133,7 @@ function renderizar() {
   renderSecretarias(d, t.proj);
   renderTabela(d);
   renderOkrs(d);
+  renderMudancas(d);
   renderObras(d);
   renderInvestimentos(d);
   renderPrazos(d);
@@ -1059,16 +1142,21 @@ function renderizar() {
 
 const kpiHtml = (cls, ic, rot, val, sub, attr = '') => `<div class="kpi ${cls}" ${attr}>${ICONES[ic]}<div><div class="rot">${rot}</div><div class="val">${val}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div></div>`;
 
-function renderKpis(t) {
+// tb = totais da leitura anterior (mesmos filtros); quando existe, cada cartão mostra a variação
+function renderKpis(t, tb, base) {
   const pct = v => fmtPct(t.proj ? v / t.proj : NaN);
+  const varia = c => {
+    const v = tb ? t[c] - tb[c] : 0;
+    return Math.abs(v) < 5000 ? '' : `<span class="var" title="Variação desde a leitura de ${fmtQuando(base.ts)}">${v > 0 ? '▲' : '▼'} ${fmtMi(Math.abs(v))}</span>`;
+  };
   const k = kpiHtml;
   $('kpis').innerHTML =
-    k('kn', 'alvo', 'Investimento Projetado', fmtMi(t.proj)) +
-    k('kf1', 'moedas', 'Recursos Próprios', fmtMi(t.proprio), pct(t.proprio) + ' do total') +
-    k('kf2', 'cone', 'Contrib. de Melhoria', fmtMi(t.melhoria), pct(t.melhoria) + ' do total') +
-    k('kf3', 'maos', 'Recursos Externos', fmtMi(t.externo), pct(t.externo) + ' do total') +
-    k('kn2', 'doc', 'Valor Licitado', fmtMi(t.lic), pct(t.lic) + ' do projetado') +
-    k('kc', 'barras', 'Diferença (Prev. – Lic.)', fmtMi(t.dif));
+    k('kn', 'alvo', 'Investimento Projetado', fmtMi(t.proj), varia('proj')) +
+    k('kf1', 'moedas', 'Recursos Próprios', fmtMi(t.proprio), pct(t.proprio) + ' do total' + varia('proprio')) +
+    k('kf2', 'cone', 'Contrib. de Melhoria', fmtMi(t.melhoria), pct(t.melhoria) + ' do total' + varia('melhoria')) +
+    k('kf3', 'maos', 'Recursos Externos', fmtMi(t.externo), pct(t.externo) + ' do total' + varia('externo')) +
+    k('kn2', 'doc', 'Valor Licitado', fmtMi(t.lic), pct(t.lic) + ' do projetado' + varia('lic')) +
+    k('kc', 'barras', 'Diferença (Prev. – Lic.)', fmtMi(t.dif), varia('dif'));
 }
 
 function renderSituacao(d) {
@@ -1343,20 +1431,43 @@ function renderFunil(d) {
   $('obras-funil').innerHTML = html;
 }
 
+let ganttPeriodo = 'tudo', ganttGrupo = false;   // 'tudo' | ano ('2026') | '12m'
 function renderGantt(d) {
   const hoje = hojeUTC();
-  const itens = d.filter(temMarco).map(p => {
+  let itens = d.filter(temMarco).map(p => {
     const pts = [['aut', p.dtAut], ['edital', p.dtEdital], ['lic', p.dtLic], ['ent', p.dtEnt]].filter(x => x[1]);
     const ultimo = pts[pts.length - 1][1];
     return { p, pts, ini: pts[0][1], fim: emAndamento(p) ? new Date(Math.max(hoje, ultimo)) : ultimo };
-  }).sort((a, b) => a.ini - b.ini || a.fim - b.fim);
-  if (!itens.length) { $('obras-gantt').innerHTML = '<div class="vazio">Nenhum projeto com datas no filtro.</div>'; return; }
+  });
 
-  const minI = new Date(Math.min(...itens.map(i => i.ini)));
-  const maxF = new Date(Math.max(...itens.map(i => i.fim), hoje));
-  const t0 = Date.UTC(minI.getUTCFullYear(), minI.getUTCMonth(), 1);
-  const t1 = Date.UTC(maxF.getUTCFullYear(), maxF.getUTCMonth() + 1, 1);
-  const W = 1000, LW = 270, RH = 26, TOP = 34, H = TOP + itens.length * RH + 6;
+  // controles: período (zoom) e agrupamento
+  const anosG = [...new Set(itens.flatMap(i => { const a = []; for (let y = i.ini.getUTCFullYear(); y <= i.fim.getUTCFullYear(); y++) a.push(String(y)); return a; }))].sort();
+  if (!['tudo', '12m', ...anosG].includes(ganttPeriodo)) ganttPeriodo = 'tudo';
+  const bt = (v, r) => `<button data-gp="${v}" class="${ganttPeriodo === v ? 'ativo' : ''}" aria-pressed="${ganttPeriodo === v}">${r}</button>`;
+  $('gantt-ctrl').innerHTML = `<span>Período</span><div class="seg">${bt('tudo', 'Tudo')}${anosG.map(a => bt(a, a)).join('')}${bt('12m', 'Últimos 12 meses')}</div>
+    <label class="chk"><input type="checkbox" id="gantt-grupo" ${ganttGrupo ? 'checked' : ''}> Agrupar por secretaria</label>`;
+
+  let t0 = null, t1 = null;
+  if (ganttPeriodo === '12m') { t1 = Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() + 1, 1); t0 = Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - 11, 1); }
+  else if (ganttPeriodo !== 'tudo') { t0 = Date.UTC(+ganttPeriodo, 0, 1); t1 = Date.UTC(+ganttPeriodo + 1, 0, 1); }
+  if (t0 != null) itens = itens.filter(i => i.fim >= t0 && i.ini < t1);   // só o que cruza o período
+  if (!itens.length) { $('obras-gantt').innerHTML = `<div class="vazio">Nenhum projeto com datas ${t0 != null ? 'neste período' : 'no filtro'}.</div>`; return; }
+  if (t0 == null) {
+    const minI = new Date(Math.min(...itens.map(i => i.ini)));
+    const maxF = new Date(Math.max(...itens.map(i => i.fim), hoje));
+    t0 = Date.UTC(minI.getUTCFullYear(), minI.getUTCMonth(), 1);
+    t1 = Date.UTC(maxF.getUTCFullYear(), maxF.getUTCMonth() + 1, 1);
+  }
+  const ni = s => s === 'Não informada';
+  itens.sort((a, b) => (ganttGrupo ? ni(a.p.sec) - ni(b.p.sec) || a.p.sec.localeCompare(b.p.sec, 'pt-BR') : 0) || a.ini - b.ini || a.fim - b.fim);
+  // linhas do desenho: cabeçalho de grupo (quando agrupado) + projetos
+  const linhasG = [];
+  itens.forEach((it, i) => {
+    if (ganttGrupo && (!i || itens[i - 1].p.sec !== it.p.sec)) linhasG.push({ sec: it.p.sec, n: itens.filter(x => x.p.sec === it.p.sec).length });
+    linhasG.push({ it });
+  });
+
+  const W = 1000, LW = 270, RH = 26, TOP = 34, H = TOP + linhasG.length * RH + 6;
   const x = t => LW + (t - t0) / (t1 - t0) * (W - LW - 12);
   const meses = [];
   for (let t = new Date(t0); t < t1; t = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 1))) meses.push(t);
@@ -1371,9 +1482,15 @@ function renderGantt(d) {
   });
   const COR = { edital: '#8b4fd8', lic: '#f0a91a', ent: '#1e63d6' };
   const rotulo = rotulador(itens.map(i => i.p));
-  let linhas = '';
-  itens.forEach((it, i) => {
-    const y = TOP + i * RH, yc = y + RH / 2, p = it.p;
+  let linhas = '', nItem = 0;
+  linhasG.forEach((l, i) => {
+    const y = TOP + i * RH, yc = y + RH / 2;
+    if (!l.it) {
+      linhas += `<g><rect x="0" y="${y}" width="${W}" height="${RH}" fill="#e3e9f3"/><text x="8" y="${yc + 4}" font-size="12.5" font-weight="700" fill="#0f2a5c">${esc(NOMES_SECRETARIA[l.sec] || l.sec)}<tspan font-weight="400" fill="#4a5873"> · ${l.n} projeto(s)</tspan></text></g>`;
+      nItem = 0;
+      return;
+    }
+    const it = l.it, p = it.p;
     let barras = '';
     for (let j = 1; j < it.pts.length; j++) {
       const a = x(it.pts[j - 1][1]), b = x(it.pts[j][1]);
@@ -1387,16 +1504,17 @@ function renderGantt(d) {
     const dica = [p.titulo + (p.detalhe ? ' — ' + p.detalhe : ''), 'Secretaria: ' + p.sec, 'Situação: ' + p.situacao,
       'Autorização: ' + fmtData(p.dtAut), 'Edital: ' + fmtData(p.dtEdital), 'Licitação: ' + fmtData(p.dtLic), 'Entrega: ' + fmtData(p.dtEnt)].join('\n');
     linhas += `<g ${abre(p)}><title>${esc(dica)}</title>
-      ${i % 2 ? `<rect x="0" y="${y}" width="${W}" height="${RH}" fill="#f7f9fc"/>` : ''}
-      <text x="8" y="${yc + 4}" font-size="12.5" fill="#12203a">${esc(corta(rotulo(p), 34))}<tspan fill="#7d8aa3"> · ${esc(p.sec)}</tspan></text>
-      ${barras}</g>`;
+      <rect x="0" y="${y}" width="${W}" height="${RH}" fill="${nItem++ % 2 ? '#f7f9fc' : '#fff'}"/>
+      <text x="${ganttGrupo ? 18 : 8}" y="${yc + 4}" font-size="12.5" fill="#12203a">${esc(corta(rotulo(p), ganttGrupo ? 40 : 34))}${ganttGrupo ? '' : `<tspan fill="#7d8aa3"> · ${esc(p.sec)}</tspan>`}</text>
+      <g clip-path="url(#gclip)">${barras}</g></g>`;
   });
-  const xh = x(hoje);
+  const xh = x(hoje), hojeVisivel = hoje >= t0 && hoje < t1;
   $('obras-gantt').innerHTML = `<svg viewBox="0 0 ${W} ${H}">
-    <defs><pattern id="listras" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#dbe8fc"/><rect width="4" height="8" fill="#9cc0f5"/></pattern></defs>
+    <defs><pattern id="listras" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#dbe8fc"/><rect width="4" height="8" fill="#9cc0f5"/></pattern>
+      <clipPath id="gclip"><rect x="${LW}" y="0" width="${W - LW - 4}" height="${H}"/></clipPath></defs>
     ${linhas}${grade}
-    <line x1="${xh}" x2="${xh}" y1="${TOP - 6}" y2="${H}" stroke="#e04848" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <text x="${xh}" y="${TOP - 24}" text-anchor="middle" font-size="11" font-weight="700" fill="#e04848">hoje</text>
+    ${hojeVisivel ? `<line x1="${xh}" x2="${xh}" y1="${TOP - 6}" y2="${H}" stroke="#e04848" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="${xh}" y="${TOP - 24}" text-anchor="middle" font-size="11" font-weight="700" fill="#e04848">hoje</text>` : ''}
   </svg>`;
 }
 
@@ -1845,6 +1963,166 @@ function renderMetas(d) {
 }
 
 /* =====================================================================
+   O que mudou — as leituras anteriores ficam guardadas neste navegador (localStorage).
+   Uma leitura nova é guardada sempre que os dados da planilha mudam; a comparação padrão
+   é com a leitura imediatamente anterior, e dá para escolher outra mais antiga.
+   ===================================================================== */
+const HIST_CHAVE = 'painel-okr-historico';
+const CAMPOS_FOTO = ['titulo', 'situacao', 'cor', 'ano', 'sec', 'eixo', 'objetivo', 'acaoTitulo', 'comunidade', 'origem', 'proj', 'proprio', 'melhoria', 'externo', 'lic', 'dif', 'avanco'];
+let HIST = [], baseTs = null;
+try { HIST = JSON.parse(localStorage.getItem(HIST_CHAVE)) || []; } catch { HIST = []; }
+const fmtQuando = ts => new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' às');
+// A planilha não tem código do projeto: a identidade é o texto da descrição (repetidos ganham #2, #3…).
+function registrarLeitura() {
+  const vistos = new Map();
+  TODOS.forEach(p => { const b = chave(p.descricao).slice(0, 120), n = (vistos.get(b) || 0) + 1; vistos.set(b, n); p.k = b + '#' + n; });
+  const dados = TODOS.map(p => { const o = { k: p.k, ent: p.dtEnt ? p.dtEnt.getTime() : null }; for (const c of CAMPOS_FOTO) o[c] = p[c]; return o; });
+  const ult = HIST[HIST.length - 1];
+  if (ult && JSON.stringify(ult.dados) === JSON.stringify(dados)) return;   // nada mudou desde a última leitura guardada
+  HIST.push({ ts: Date.now(), dados });
+  // guarda as 4 mais recentes e, das mais antigas, só a última de cada dia (no máximo 12)
+  const dia = ts => new Date(ts).toDateString();
+  HIST = HIST.filter((h, i) => i >= HIST.length - 4 || dia(h.ts) !== dia(HIST[i + 1].ts)).slice(-12);
+  try { localStorage.setItem(HIST_CHAVE, JSON.stringify(HIST)); }
+  catch { try { HIST = HIST.slice(-3); localStorage.setItem(HIST_CHAVE, JSON.stringify(HIST)); } catch { /* sem espaço: segue sem histórico */ } }
+}
+function leituraBase() {
+  const cands = HIST.slice(0, -1);   // a última é a leitura atual
+  return cands.find(h => h.ts === baseTs) || cands[cands.length - 1] || null;
+}
+
+function renderMudancas(d) {
+  const b = leituraBase(), cands = HIST.slice(0, -1);
+  $('mud-base-rot').hidden = cands.length < 2;
+  $('mud-base').innerHTML = cands.slice().reverse().map(h => `<option value="${h.ts}" ${h === b ? 'selected' : ''}>${fmtQuando(h.ts)}</option>`).join('');
+  if (!b) {
+    $('mud-desde').textContent = '';
+    $('mudancas').innerHTML = `<div class="vazio">Primeira leitura guardada neste navegador${HIST.length ? ' (' + fmtQuando(HIST[HIST.length - 1].ts) + ')' : ''}. Quando a planilha for alterada, as mudanças aparecem aqui e nos cartões do topo.</div>`;
+    return;
+  }
+  $('mud-desde').textContent = `(desde a leitura de ${fmtQuando(b.ts)})`;
+  const antes = new Map(b.dados.map(o => [o.k, o]));
+  const itens = [], cont = { sit: 0, novo: 0, valor: 0, outro: 0, rem: 0 };
+  for (const p of d) {
+    const o = antes.get(p.k);
+    if (!o) { cont.novo++; itens.push({ ord: 1, p, html: `<span class="frag"><span class="chip novo">Novo projeto</span></span><span class="frag">${pilula(p)}</span>${p.proj ? `<span class="frag">Projetado: <b>${fmtReal(p.proj)}</b></span>` : ''}` }); continue; }
+    const m = [];
+    let ord = 3;
+    if (o.situacao !== p.situacao) { m.push(`${pilula(o)} → ${pilula(p)}`); ord = 0; cont.sit++; }
+    const din = (r, a, v) => {
+      if ((a ?? null) === (v ?? null) || (a != null && v != null && Math.abs(a - v) < 0.5)) return false;
+      m.push(`${r}: ${a ? fmtReal(a) : '—'} → <b>${v != null ? fmtReal(v) : '—'}</b>`);
+      return true;
+    };
+    if (din('Projetado', o.proj, p.proj) + din('Licitado', o.lic, p.lic) > 0) { cont.valor++; ord = Math.min(ord, 2); }
+    if (o.situacao === p.situacao && (o.avanco ?? null) !== (p.avanco ?? null)) m.push(`Execução física: ${o.avanco != null ? o.avanco + '%' : '—'} → <b>${p.avanco != null ? p.avanco + '%' : '—'}</b>`);
+    const ent = p.dtEnt ? p.dtEnt.getTime() : null;
+    if (o.ent !== ent) m.push(ent ? `Entrega: <b>${fmtData(p.dtEnt)}</b>` : 'Data de entrega removida');
+    for (const [c, r] of [['sec', 'Secretaria'], ['ano', 'Ano'], ['eixo', 'Eixo'], ['objetivo', 'Objetivo']]) if (o[c] !== p[c]) m.push(`${r}: ${esc(o[c])} → <b>${esc(p[c])}</b>`);
+    if (!m.length) continue;
+    if (ord === 3) cont.outro++;
+    itens.push({ ord, p, html: m.map(x => `<span class="frag">${x}</span>`).join('') });
+  }
+  const atuais = new Set(TODOS.map(p => p.k));
+  for (const o of aplicaFiltros(b.dados)) if (!atuais.has(o.k)) { cont.rem++; itens.push({ ord: 4, o, html: `<span class="frag"><span class="chip">Removido da planilha</span></span><span class="frag">${pilula(o)}</span>` }); }
+  if (!itens.length) { $('mudancas').innerHTML = '<div class="vazio">Nenhuma mudança nos projetos do filtro desde essa leitura.</div>'; return; }
+  itens.sort((a, c) => a.ord - c.ord || ((c.p || c.o).proj || 0) - ((a.p || a.o).proj || 0));
+  const rot = rotulador(TODOS);   // títulos repetidos ganham o detalhe
+  const res = [[cont.sit, 'mudaram de situação'], [cont.novo, 'novo(s)'], [cont.valor, 'com valor alterado'], [cont.outro, 'com outros ajustes'], [cont.rem, 'removido(s)']]
+    .filter(x => x[0]).map(x => `<span><b>${x[0]}</b> ${x[1]}</span>`).join('');
+  $('mudancas').innerHTML = `<div class="mud-resumo">${res}</div><ul class="mud">${itens.map(i => i.p
+    ? `<li ${abre(i.p)}><b title="${esc(i.p.titulo + (i.p.detalhe ? ' — ' + i.p.detalhe : ''))}">${esc(rot(i.p))}</b><span>${i.html}</span></li>`
+    : `<li class="rem"><b>${esc(i.o.titulo)}</b><span>${i.html}</span></li>`).join('')}</ul>`;
+}
+
+/* =====================================================================
+   Modo apresentação (TV / reunião): tela cheia, sem menu, trocando de página sozinho.
+   Páginas mais altas que a tela rolam devagar e ficam proporcionalmente mais tempo.
+   ===================================================================== */
+// parado = começa na página atual, sem trocar sozinho, até a pessoa apertar ▶ (é como o botão do menu abre)
+function iniciarApresentacao(seg, telaCheia, parado) {
+  tv.ativo = true; tv.pausado = !!parado; tv.t = 0; tv.ultimo = performance.now();
+  if (seg) tv.seg = seg;
+  if (![...$('tv-seg').options].some(o => +o.value === tv.seg)) $('tv-seg').add(new Option(tv.seg + ' s', tv.seg));
+  $('tv-seg').value = String(tv.seg);
+  fecharDetalhe();
+  document.body.classList.add('apresentando');
+  $('tv-barra').hidden = $('tv-progresso').hidden = false;
+  if (telaCheia && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().then(() => { tv.cheia = true; }).catch(() => { /* sem tela cheia: apresenta na janela */ });
+  window.scrollTo(0, 0);
+  atualizarTv(); gravarHash(); mexeuTv();
+  cancelAnimationFrame(tv.raf);
+  tv.raf = requestAnimationFrame(passoTv);
+}
+function sairApresentacao() {
+  if (!tv.ativo) return;
+  tv.ativo = false;
+  cancelAnimationFrame(tv.raf); clearTimeout(tv.ocioso);
+  document.body.classList.remove('apresentando', 'ocioso');
+  $('tv-barra').hidden = $('tv-progresso').hidden = true;
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  tv.cheia = false;
+  gravarHash();
+}
+function atualizarTv() {
+  const i = PAGINAS.findIndex(p => p.id === paginaAtual);
+  $('tv-pg').textContent = `${i + 1}/${PAGINAS.length} · ${PAGINAS[i].rotulo.replace('<br>', ' ')}`;
+  $('tv-pausa').textContent = tv.pausado ? '▶ Troca automática' : '❚❚';
+  $('tv-barra').classList.toggle('oculta', false);
+}
+function trocarTv(passo) {
+  const i = PAGINAS.findIndex(p => p.id === paginaAtual);
+  tv.t = 0;
+  irPara(PAGINAS[(i + passo + PAGINAS.length) % PAGINAS.length].id);
+  atualizarTv();
+}
+function passoTv(agora) {
+  if (!tv.ativo) return;
+  const dt = Math.min(2, (agora - tv.ultimo) / 1000);   // aba em segundo plano não "pula" páginas ao voltar
+  tv.ultimo = agora;
+  const parado = tv.pausado || !TODOS.length || $('gaveta').classList.contains('aberta') || $('sobrepor').classList.contains('visivel');
+  if (!parado) {
+    tv.t += dt;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const dur = tv.seg * (1 + 0.75 * Math.max(0, max) / innerHeight);   // seg por tela; cada tela a mais soma 75%
+    if (max > 24) {
+      const esp = Math.min(4, tv.seg * 0.2);   // pausa no topo e no fim
+      window.scrollTo(0, max * Math.min(1, Math.max(0, (tv.t - esp) / (dur - 2 * esp))));
+    }
+    $('tv-progresso').firstElementChild.style.width = Math.min(100, tv.t / dur * 100) + '%';
+    if (tv.t >= dur) trocarTv(1);
+  }
+  tv.raf = requestAnimationFrame(passoTv);
+}
+// os controles aparecem ao mexer o mouse e somem depois de 3 s (ficam visíveis enquanto pausado)
+function mexeuTv() {
+  if (!tv.ativo) return;
+  document.body.classList.remove('ocioso');
+  $('tv-barra').classList.remove('oculta');
+  clearTimeout(tv.ocioso);
+  tv.ocioso = setTimeout(() => { if (tv.ativo && !tv.pausado) { $('tv-barra').classList.add('oculta'); document.body.classList.add('ocioso'); } }, 3000);
+}
+function pausarTv(p) { tv.pausado = p; atualizarTv(); mexeuTv(); }
+$('btn-apresentar').onclick = () => iniciarApresentacao(tv.seg, true, true);
+$('tv-barra').addEventListener('click', e => {
+  const a = e.target.closest('[data-tv]');
+  if (!a) return;
+  ({ ant: () => trocarTv(-1), prox: () => trocarTv(1), pausa: () => pausarTv(!tv.pausado), sair: sairApresentacao })[a.dataset.tv]();
+});
+$('tv-seg').onchange = e => { tv.seg = +e.target.value; gravarHash(); };
+document.addEventListener('mousemove', mexeuTv);
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && tv.ativo && tv.cheia) sairApresentacao(); });
+// rolar à mão pausa a apresentação (senão a rolagem automática brigaria com a pessoa)
+for (const ev of ['wheel', 'touchmove']) window.addEventListener(ev, () => { if (tv.ativo && !tv.pausado) pausarTv(true); }, { passive: true });
+document.addEventListener('keydown', e => {
+  if (!tv.ativo || e.target.closest('input, select, button, [data-f], [data-pid]')) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); trocarTv(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); trocarTv(-1); }
+  else if (e.key === ' ') { e.preventDefault(); pausarTv(!tv.pausado); }
+});
+if (tvInicial) iniciarApresentacao(tvInicial, false);   // endereço com "tv=20": o navegador não deixa abrir tela cheia sozinho (use F11)
+
+/* =====================================================================
    Detalhe do projeto (painel lateral) — abre ao clicar em qualquer elemento com data-pid
    ===================================================================== */
 let focoAntes = null;
@@ -1990,6 +2268,7 @@ const memoria = {
 function carregar(buf, nome, versao) {
   TODOS = lerPlanilha(buf);
   ultimaVersao = versao;
+  registrarLeitura();
   fecharDetalhe();
   montarFiltros();
   renderizar();
@@ -2163,7 +2442,11 @@ window.painel = { carregar: (buf, nome) => carregar(buf, nome || 'planilha.xlsx'
       const url = location.href.split('#')[0].split('?')[0] + '?versao=' + Date.now();  // fura o cache do navegador e do GitHub
       const html = await (await fetch(url, { cache: 'no-store' })).text();
       const m = /const VERSAO_PAINEL = '([^']+)'/.exec(html);
-      if (m && m[1] !== VERSAO_PAINEL) { avisado = true; $('nova-versao').hidden = false; }
+      if (m && m[1] !== VERSAO_PAINEL) {
+        avisado = true;
+        if (tv.ativo) { gravarHash(); return location.reload(); }   // TV sem ninguém para clicar: atualiza sozinha e continua apresentando
+        $('nova-versao').hidden = false;
+      }
     } catch { /* sem rede: tenta de novo depois */ }
   }
   $('nova-versao-btn').addEventListener('click', async () => {
