@@ -130,7 +130,7 @@
   .kpi .rot { font-size: clamp(.75rem, .85vw, .9375rem); opacity: .95; line-height: 1.2; }
   .kpi .val { font-size: clamp(1.125rem, 1.45vw, 1.75rem); font-weight: 700; line-height: 1.15; white-space: nowrap; }
   .kpi .sub { font-size: clamp(max(11px, .6875rem), .8vw, .875rem); opacity: .92; }
-  .kpis .kpi:first-child .val { font-size: clamp(1.25rem, 1.65vw, 2rem); }
+  .kpis .kpi:first-child .val { font-size: clamp(1.1875rem, 1.5vw, 1.875rem); }
   /* Cores dos cartões — cada uma com um significado só:
      kn/kn2/kc = neutros (totais, tempos, outros) · kf1–kf3 = fonte do recurso (tons de verde-água)
      ks-* = situação do projeto (mesmas cores da rosca) · kal = alerta */
@@ -757,7 +757,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-10 12:13';
+const VERSAO_PAINEL = '2026-11-10 12:22';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -828,7 +828,12 @@ const normaliza = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').
 const chave = s => normaliza(s).replace(/[^a-z0-9#]/g, '');
 
 const fmtNum = (v, d = 2) => v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
-const fmtMi = v => 'R$ ' + fmtNum(v / 1e6) + ' mi';
+// Valor resumido, sempre na mesma regra: a partir de 1 milhão em "MM" (2 casas), abaixo disso em "mil" (1 casa), abaixo de mil em reais com centavos.
+// Ex.: 17.360.000 → R$ 17,36 MM · 110.000 → R$ 110,0 mil · 800 → R$ 800,00 · 0 → R$ 0,00 · negativo → −R$ 62,9 mil
+const fmtMi = v => {
+  const a = Math.abs(v || 0);
+  return (v < 0 ? '−' : '') + 'R$ ' + (a >= 999950 ? fmtNum(a / 1e6) + ' MM' : a >= 1000 ? fmtNum(a / 1e3, 1) + ' mil' : fmtNum(a, 2));
+};
 const fmtReal = v => v == null ? '—' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmtPct = (v, d = 1) => isFinite(v) ? fmtNum(v * 100, d) + '%' : '—';
 const fmtData = d => d ? d.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—';
@@ -1240,7 +1245,7 @@ function renderEvolucao(d) {
   const y = v => T + (H - T - B) * (1 - v / topo);
   let grade = '';
   for (let v = 0; v <= topo + 1; v += passo) {
-    grade += `<line x1="${L}" x2="${W - R + 10}" y1="${y(v)}" y2="${y(v)}" stroke="#e6ebf3"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="13" fill="#12203a">R$ ${fmtNum(v / 1e6, 0)} mi</text>`;
+    grade += `<line x1="${L}" x2="${W - R + 10}" y1="${y(v)}" y2="${y(v)}" stroke="#e6ebf3"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="13" fill="#12203a">${v ? `R$ ${fmtNum(v / 1e6, 0)} MM` : 'R$ 0'}</text>`;
   }
   const linha = (arr, de, ate) => arr.slice(de, ate + 1).map((v, i) => `${i ? 'L' : 'M'}${x(de + i)},${y(v)}`).join(' ');
   const area = arr => `${linha(arr, 0, n)} L${x(n)},${y(0)} L${x(0)},${y(0)} Z`;
@@ -1644,7 +1649,7 @@ function renderAnoFonte(d) {
   const y = v => T + (H - T - B) * (1 - v / topo);
   const bw = (W - L - R) / cats.length;
   let svg = '';
-  for (let v = 0; v <= topo + 1; v += passo) svg += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e6ebf3"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#4a5873">R$ ${fmtNum(v / 1e6, 0)} mi</text>`;
+  for (let v = 0; v <= topo + 1; v += passo) svg += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e6ebf3"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#4a5873">${v ? `R$ ${fmtNum(v / 1e6, 0)} MM` : 'R$ 0'}</text>`;
   col.forEach((c, i) => {
     const x0 = L + i * bw + bw * 0.2, w = bw * 0.6;
     let acc = 0;
