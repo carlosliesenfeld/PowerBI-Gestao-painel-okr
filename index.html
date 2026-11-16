@@ -245,8 +245,8 @@
   .info { display: inline-flex; width: .9375rem; height: .9375rem; border-radius: 50%; background: #dbe3ef; color: var(--texto-2); font-size: .625rem; font-weight: 700; align-items: center; justify-content: center; cursor: help; vertical-align: middle; margin-left: .25rem; }
 
   /* Obras e Entregas */
-  .l-obras1 { grid-template-columns: 1fr 2.1fr; }
-  .l-obras2 { grid-template-columns: 1fr 1fr; }
+  .l-obras1 { grid-template-columns: 1fr; }
+  .l-obras2 { grid-template-columns: .56fr 1fr 1fr; }
   .funil { display: flex; flex-direction: column; gap: .25rem; margin-top: .625rem; }
   .funil .etapa { display: flex; justify-content: center; }
   .funil .etapa div {
@@ -266,6 +266,7 @@
   .gantt-leg i.ponto { width: .6875rem; height: .6875rem; border-radius: 50%; background: #1f9d3a; border: 2px solid #fff; box-shadow: 0 0 0 1px #1f9d3a; }
   .gantt { max-height: 23.75rem; overflow: auto; }
   .gantt svg { display: block; width: 100%; min-width: 45rem; height: auto; }
+  .gantt svg.gantt-cab { position: sticky; top: 0; z-index: 1; background: var(--card, #fff); box-shadow: 0 1px 0 #e3e9f3; }   /* linha dos meses fixa ao rolar */
   .tabela-wrap.alta { max-height: 22.5rem; }
 
   /* Investimentos e Captação */
@@ -480,6 +481,8 @@
     .l2 { grid-template-columns: 1fr 1fr; }
     .l2 .card:first-child { grid-column: 1 / -1; }
     .l3, .l4, .l-obras1, .l-prz1 { grid-template-columns: 1fr; }
+    .l-obras2 { grid-template-columns: 1fr 1fr; }
+    .l-obras2 .card:first-child { grid-column: 1 / -1; }
     .titulo h1 { font-size: 1.875rem; }
   }
   @media (max-width: 900px) {
@@ -631,7 +634,6 @@
     <section class="kpis" id="obras-kpis"></section>
 
     <section class="linha l-obras1">
-      <div class="card"><h2>Funil das Etapas <small>(projetos com marco registrado)</small></h2><div id="obras-funil"></div></div>
       <div class="card">
         <h2>Cronograma das Obras <small>(Autorização → Entrega)</small></h2>
         <div class="gantt-ctrl" id="gantt-ctrl"></div>
@@ -647,6 +649,7 @@
     </section>
 
     <section class="linha l-obras2">
+      <div class="card"><h2>Funil das Etapas <small>(projetos com marco registrado)</small></h2><div id="obras-funil"></div></div>
       <div class="card"><h2>Por Tipo de Obra <small>(Valor Projetado)</small></h2><div id="obras-tipo"></div></div>
       <div class="card"><h2>Por Comunidade <small>(Valor Projetado)</small></h2><div id="obras-comunidade"></div></div>
     </section>
@@ -758,7 +761,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-13 17:18';
+const VERSAO_PAINEL = '2026-11-16 20:36';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -1474,7 +1477,13 @@ function renderFunil(d) {
 }
 
 let ganttPeriodo = 'tudo', ganttGrupo = false;   // 'tudo' | ano ('2026') | '12m'
-function renderGantt(d) {
+// O cronograma é desenhado na largura real do card: redesenha quando ela muda (janela, página que estava oculta).
+let ganttLarg = 0;
+new ResizeObserver(() => {
+  const w = Math.round($('obras-gantt').clientWidth);
+  if (w && Math.abs(w - ganttLarg) > 8 && $('obras-gantt').firstChild) renderGantt(filtrados());
+}).observe($('obras-gantt'));
+function renderGantt(d, refeito) {
   const hoje = hojeUTC();
   let itens = d.filter(temMarco).map(p => {
     const pts = [['aut', p.dtAut], ['edital', p.dtEdital], ['lic', p.dtLic], ['ent', p.dtEnt]].filter(x => x[1]);
@@ -1509,7 +1518,10 @@ function renderGantt(d) {
     linhasG.push({ it });
   });
 
-  const W = 1000, LW = 270, RH = 26, TOP = 34, H = TOP + linhasG.length * RH + 6;
+  // Desenho em escala 1:1 com a largura real do card (letra no tamanho real, sem ampliar); coluna de nomes ~36%.
+  const W = Math.max(640, Math.round($('obras-gantt').clientWidth) || 1000), LW = Math.min(560, Math.max(270, Math.round(W * .36)));
+  ganttLarg = W;
+  const RH = 24, TOP = 34, H = TOP + linhasG.length * RH + 6, FT = 12;
   const x = t => LW + (t - t0) / (t1 - t0) * (W - LW - 12);
   const meses = [];
   for (let t = new Date(t0); t < t1; t = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 1))) meses.push(t);
@@ -1523,12 +1535,17 @@ function renderGantt(d) {
     primeiro = false;
   });
   const COR = { edital: '#8b4fd8', lic: '#f0a91a', ent: '#1e63d6' };
-  const rotulo = rotulador(itens.map(i => i.p));
+  // Nome: sempre o título; quando o título se repete (ex.: "Aquisição de Equipamento Pesado"), o detalhe vem depois, em cinza.
+  const nTit = new Map();
+  itens.forEach(i => nTit.set(i.p.titulo, (nTit.get(i.p.titulo) || 0) + 1));
+  const raizPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const larg = t => medirTextoRem(t, FT / raizPx) * raizPx;
+  const cortaPx = (t, px) => { if (larg(t) <= px) return t; let a = 0, b = t.length; while (a < b) { const m = (a + b + 1) >> 1; larg(t.slice(0, m).trimEnd() + '…') <= px ? a = m : b = m - 1; } return t.slice(0, a).trimEnd() + '…'; };
   let linhas = '', nItem = 0;
   linhasG.forEach((l, i) => {
     const y = TOP + i * RH, yc = y + RH / 2;
     if (!l.it) {
-      linhas += `<g><rect x="0" y="${y}" width="${W}" height="${RH}" fill="#e3e9f3"/><text x="8" y="${yc + 4}" font-size="12.5" font-weight="700" fill="#0f2a5c">${esc(NOMES_SECRETARIA[l.sec] || l.sec)}<tspan font-weight="400" fill="#4a5873"> · ${l.n} projeto(s)</tspan></text></g>`;
+      linhas += `<g><rect x="0" y="${y}" width="${W}" height="${RH}" fill="#e3e9f3"/><text x="8" y="${yc + 4}" font-size="${FT}" font-weight="700" fill="#0f2a5c">${esc(NOMES_SECRETARIA[l.sec] || l.sec)}<tspan font-weight="400" fill="#4a5873"> · ${l.n} projeto(s)</tspan></text></g>`;
       nItem = 0;
       return;
     }
@@ -1547,17 +1564,28 @@ function renderGantt(d) {
       'Autorização: ' + fmtData(p.dtAut), 'Edital: ' + fmtData(p.dtEdital), 'Licitação: ' + fmtData(p.dtLic), 'Entrega: ' + fmtData(p.dtEnt)].join('\n');
     linhas += `<g ${abre(p)}><title>${esc(dica)}</title>
       <rect x="0" y="${y}" width="${W}" height="${RH}" fill="${nItem++ % 2 ? '#f7f9fc' : '#fff'}"/>
-      <text x="${ganttGrupo ? 18 : 8}" y="${yc + 4}" font-size="12.5" fill="#12203a">${esc(corta(rotulo(p), ganttGrupo ? 40 : 34))}${ganttGrupo ? '' : `<tspan fill="#7d8aa3"> · ${esc(p.sec)}</tspan>`}</text>
+      ${(() => {
+        const x0 = ganttGrupo ? 18 : 8, suf = ganttGrupo ? '' : ` · ${p.sec}`;
+        const sep = nTit.get(p.titulo) > 1 && p.detalhe ? ' — ' : '';
+        const nome = cortaPx(p.titulo + (sep ? sep + p.detalhe : ''), LW - x0 - 10 - larg(suf));
+        const tit = nome.slice(0, p.titulo.length), resto = nome.slice(p.titulo.length);
+        return `<text x="${x0}" y="${yc + 4}" font-size="${FT}" fill="#12203a">${esc(tit)}${resto ? `<tspan fill="#5d6b85">${esc(resto)}</tspan>` : ''}${suf ? `<tspan fill="#7d8aa3">${esc(suf)}</tspan>` : ''}</text>`;
+      })()}
       <g clip-path="url(#gclip)">${barras}</g></g>`;
   });
   const xh = x(hoje), hojeVisivel = hoje >= t0 && hoje < t1;
-  $('obras-gantt').innerHTML = `<svg viewBox="0 0 ${W} ${H}">
+  const hojeLinha = hojeVisivel ? `<line x1="${xh}" x2="${xh}" y1="${TOP - 6}" y2="${H}" stroke="#e04848" stroke-width="1.5" stroke-dasharray="4 3"/>` : '';
+  // Cabeçalho (meses + "hoje") num SVG próprio, fixo no topo ao rolar; o corpo usa o mesmo desenho a partir de y = TOP.
+  $('obras-gantt').innerHTML = `<svg class="gantt-cab" viewBox="0 0 ${W} ${TOP}" aria-hidden="true">${grade}${hojeLinha}
+    ${hojeVisivel ? `<text x="${xh}" y="${TOP - 24}" text-anchor="middle" font-size="11" font-weight="700" fill="#e04848">hoje</text>` : ''}</svg>
+  <svg viewBox="0 ${TOP} ${W} ${H - TOP}">
     <defs><pattern id="listras" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#dbe8fc"/><rect width="4" height="8" fill="#9cc0f5"/></pattern>
       <clipPath id="gclip"><rect x="${LW}" y="0" width="${W - LW - 4}" height="${H}"/></clipPath></defs>
-    ${linhas}${grade}
-    ${hojeVisivel ? `<line x1="${xh}" x2="${xh}" y1="${TOP - 6}" y2="${H}" stroke="#e04848" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <text x="${xh}" y="${TOP - 24}" text-anchor="middle" font-size="11" font-weight="700" fill="#e04848">hoje</text>` : ''}
+    ${linhas}${grade}${hojeLinha}
   </svg>`;
+  // a barra de rolagem vertical pode surgir com o desenho e estreitar o card: redesenha uma vez na largura final
+  const wf = Math.round($('obras-gantt').clientWidth);
+  if (!refeito && wf >= 640 && Math.abs(wf - W) > 4) renderGantt(d, true);
 }
 
 function renderBarrasGrupo(id, d, chaveDe, limite, rotuloVazio, filtro) {
@@ -1572,9 +1600,22 @@ function renderBarrasGrupo(id, d, chaveDe, limite, rotuloVazio, filtro) {
   if (outros.n) lista.push(outros);
   const max = Math.max(...lista.map(l => l.v), 1);
   const cores = ['#0f2a8a', '#163a9c', '#1846b8', '#1e57c8', '#1e63d6', '#2f74e6', '#3b8af0', '#5a9df3', '#6cb0f6', '#8cc2f8'];
-  $(id).innerHTML = `<div class="secs grupo">${lista.map((l, i) => `
+  // Escala das barras: a maior barra possível sem que o rótulo de nenhuma linha passe do card.
+  // Cada termo do min(): (largura do trilho − rótulo − gap) / proporção da linha (rótulo medido em rem).
+  const rotulo = l => `${fmtMi(l.v)} · ${l.n} proj.`;
+  const termos = lista.filter(l => l.v / max >= .02).map(l => `(100% - ${(medirTextoRem(rotulo(l), .875) + .625).toFixed(2)}rem) / ${(l.v / max).toFixed(4)}`);
+  $(id).innerHTML = `<div class="secs grupo" style="--esc:min(${termos.join(', ')})">${lista.map((l, i) => `
     <div class="nome" title="${esc(l.k)}">${esc(l.k)}</div>
-    <div class="trilho" ${l.outros ? 'style="cursor:default"' : filtra(filtro, l.k) + ' title="Clique para filtrar"'}><span style="width:calc(${l.v / max} * (100% - 175px));background:${l.outros ? '#b7c1d1' : cores[i]}"></span><em>${fmtMi(l.v)} · ${l.n} proj.</em></div>`).join('')}</div>`;
+    <div class="trilho" ${l.outros ? 'style="cursor:default"' : filtra(filtro, l.k) + ' title="Clique para filtrar"'}><span style="width:calc(${(l.v / max).toFixed(4)} * var(--esc));background:${l.outros ? '#b7c1d1' : cores[i]}"></span><em>${rotulo(l)}</em></div>`).join('')}</div>`;
+}
+
+// Largura de um texto em rem (canvas: funciona mesmo com a página oculta).
+let _ctxTexto;
+function medirTextoRem(txt, tamRem) {
+  const raiz = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  _ctxTexto = _ctxTexto || document.createElement('canvas').getContext('2d');
+  _ctxTexto.font = `${tamRem * raiz}px ${getComputedStyle(document.body).fontFamily}`;
+  return _ctxTexto.measureText(txt).width / raiz;
 }
 
 function renderMarcos(d) {
