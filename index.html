@@ -761,7 +761,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-16 20:36';
+const VERSAO_PAINEL = '2026-11-16 20:45';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -2295,6 +2295,19 @@ $('gaveta-fundo').onclick = fecharDetalhe;
    ===================================================================== */
 let dicaTimer = null;
 function textoDica(alvo) {
+  // Dica só nos "i" de informação e em textos cortados com "…" (mostra o nome inteiro).
+  // Nos demais (gráficos, "Clique para filtrar", linhas que abrem o detalhe…) não há dica;
+  // remove também o title nativo, para o navegador não exibir a dele no lugar.
+  if (!alvo.closest || alvo.closest('.info')) return textoDicaBase(alvo);
+  const cortado = el => !(el instanceof SVGElement) && el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).textOverflow === 'ellipsis';
+  for (let el = alvo; el && el.nodeType === 1; el = el.parentNode) {
+    if ((el.hasAttribute('title') || el.dataset.dica) && cortado(el)) return textoDicaBase(el);
+    el.removeAttribute('title'); delete el.dataset.dica;
+    if (el instanceof SVGElement) [...el.children].filter(c => c.tagName === 'title').forEach(c => c.remove());
+  }
+  return '';
+}
+function textoDicaBase(alvo) {
   for (let el = alvo; el && el.nodeType === 1; el = el.parentNode) {
     if (el.hasAttribute('title')) { el.dataset.dica = el.getAttribute('title'); el.removeAttribute('title'); }
     else if (el instanceof SVGElement) {
