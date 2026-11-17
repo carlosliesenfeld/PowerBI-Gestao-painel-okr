@@ -292,7 +292,16 @@
   .secs .neg em { color: #c62828; font-weight: 600; }
 
   /* Prazos e Pendências */
-  .l-prz1 { grid-template-columns: 1.7fr 1fr; }
+  .l-prz2 { grid-template-columns: 1fr 3fr; }   /* pendências de cadastro (filtro) | tabela */
+  /* a tabela acompanha a altura do card da esquerda e rola por dentro (height:0 + flex:1 = não empurra a linha) */
+  .l-prz2 > .card:last-child { display: flex; flex-direction: column; }
+  .l-prz2 > .card:last-child .tabela-wrap { flex: 1 1 auto; height: 0; min-height: 12rem; max-height: none; }
+  /* linhas de altura uniforme: situação numa linha só e uma pendência + "+N" */
+  #prz-tabela .pilula { max-width: none; white-space: nowrap; }
+  #prz-tabela td.chips { white-space: nowrap; min-width: 0; }
+  #prz-tabela tbody td { height: 2.75rem; }   /* mesma altura com ou sem a linha de detalhe */
+  .chip.mais { background: #eef1f6; color: var(--texto-2); }
+  #prz-etapa .secs.grupo .nome { max-width: 34rem; }
   .rolagem { max-height: 20.625rem; overflow: auto; padding-right: .25rem; }
   .histo { display: flex; align-items: flex-end; gap: .75rem; height: 11.875rem; padding: .625rem .25rem 0; border-bottom: 1px solid var(--borda); }
   .histo div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
@@ -480,7 +489,8 @@
     .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .l2 { grid-template-columns: 1fr 1fr; }
     .l2 .card:first-child { grid-column: 1 / -1; }
-    .l3, .l4, .l-obras1, .l-prz1 { grid-template-columns: 1fr; }
+    .l3, .l4, .l-obras1, .l-prz2 { grid-template-columns: 1fr; }
+    .l-prz2 > .card:last-child .tabela-wrap { height: auto; max-height: 22.5rem; }
     .l-obras2 { grid-template-columns: 1fr 1fr; }
     .l-obras2 .card:first-child { grid-column: 1 / -1; }
     .titulo h1 { font-size: 1.875rem; }
@@ -552,6 +562,7 @@
     .card:has(.tabela-wrap), .card.obj { break-inside: auto; }
     .card { box-shadow: none; }
     .tabela-wrap, .gantt, .rolagem { max-height: none !important; overflow: visible !important; }
+    .l-prz2 > .card:last-child .tabela-wrap { height: auto !important; }
     thead th { position: static; }
     .objs-grid[hidden], .inis[hidden] { display: none !important; }
   }
@@ -684,23 +695,22 @@
   <main class="conteudo" id="pagina-prazos" hidden>
     <section class="kpis" id="prz-kpis"></section>
 
-    <section class="linha l-prz1">
-      <div class="card">
-        <h2>Tempo na Etapa Atual <small>(obras em andamento)</small></h2>
-        <div class="fontes-leg" id="prz-leg"></div>
-        <div class="rolagem" id="prz-etapa"></div>
-      </div>
-      <div class="card"><h2>Tempo desde a Autorização</h2><div id="prz-faixas"></div></div>
-    </section>
-
-    <section class="linha l-inv">
-      <div class="card"><h2>Pendências de Cadastro na Planilha</h2><div id="prz-checks"></div></div>
-      <div class="card"><h2>Aguardando Recursos <small>(emendas)</small></h2><div id="prz-aguard"></div></div>
-    </section>
-
     <section class="card">
+      <h2>Tempo na Etapa Atual <small>(obras em andamento)</small></h2>
+      <div class="fontes-leg" id="prz-leg"></div>
+      <div class="rolagem" id="prz-etapa"></div>
+    </section>
+
+    <section class="card"><h2>Tempo desde a Autorização</h2><div id="prz-faixas"></div></section>
+
+    <section class="card"><h2>Aguardando Recursos <small>(emendas)</small></h2><div id="prz-aguard"></div></section>
+
+    <section class="linha l-prz2">
+      <div class="card"><h2>Pendências de Cadastro na Planilha</h2><div id="prz-checks"></div></div>
+      <div class="card">
       <div class="tab-topo"><h2 id="prz-tab-titulo">Pendências por Projeto</h2><div class="tab-acoes"><button class="btn sec mini" id="prz-limpar" hidden>Mostrar todas</button><input class="busca" data-busca="prz-tabela" type="search" placeholder="Buscar projeto…" aria-label="Buscar projeto"><button class="btn sec mini" data-csv="prz-tabela" data-nome="pendencias-de-cadastro" title="Baixa as linhas exibidas (filtros, busca e ordem atuais) para abrir no Excel">Exportar CSV</button></div></div>
       <div class="tabela-wrap alta"><table id="prz-tabela"></table></div>
+      </div>
     </section>
   </main>
 
@@ -761,7 +771,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-16 20:45';
+const VERSAO_PAINEL = '2026-11-16 21:18';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -1419,6 +1429,12 @@ const emAndamento = p => !p.dtEnt && p.situacao !== 'Concluído';
 const temMarco = p => !!(p.dtAut || p.dtEdital || p.dtLic || p.dtEnt);
 const corta = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
 // Títulos repetidos (ex.: "Aquisição de Equipamento Pesado") são trocados pelo detalhe, que identifica o item
+// Nome com título sempre visível; quando o título se repete, o detalhe vem depois ("Título — detalhe").
+function nomeCompleto(projetos) {
+  const n = new Map();
+  projetos.forEach(p => n.set(p.titulo, (n.get(p.titulo) || 0) + 1));
+  return p => n.get(p.titulo) > 1 && p.detalhe ? { t: p.titulo, d: p.detalhe } : { t: p.titulo, d: '' };
+}
 function rotulador(projetos) {
   const n = new Map();
   projetos.forEach(p => n.set(p.titulo, (n.get(p.titulo) || 0) + 1));
@@ -1855,18 +1871,20 @@ function renderPrazos(d) {
   $('prz-leg').innerHTML = FAIXAS.map(f => `<span><i style="background:${f.c}"></i>${f.r}</span>`).join('');
   if (!comData.length) $('prz-etapa').innerHTML = '<div class="vazio">Nenhuma obra em andamento com datas no filtro.</div>';
   else {
-    const rotulo = rotulador(comData.map(x => x.p));
+    const nome = nomeCompleto(comData.map(x => x.p));
+    const rotulo = p => { const r = nome(p); return r.t + (r.d ? ' — ' + r.d : ''); };
     const max = Math.max(...comData.map(x => x.n), 1);
     $('prz-etapa').innerHTML = `<div class="secs grupo">${comData.map(x => `
-      <div class="nome" ${abre(x.p)} title="${esc(x.p.titulo + (x.p.detalhe ? ' — ' + x.p.detalhe : '') + '\nSituação: ' + x.p.situacao)}">${esc(corta(rotulo(x.p), 38))} <span style="color:var(--texto-3)">· ${esc(x.p.sec)}</span></div>
+      <div class="nome" ${abre(x.p)} title="${esc(x.p.titulo + (x.p.detalhe ? ' — ' + x.p.detalhe : '') + '\nSituação: ' + x.p.situacao)}">${esc(corta(rotulo(x.p), 90))} <span style="color:var(--texto-3)">· ${esc(x.p.sec)}</span></div>
       <div class="trilho" data-pid="${x.p.id}"><span style="width:calc(${x.n / max} * (100% - 210px));background:${faixaDe(x.n).c}"></span><em><b>${x.n} dias</b> desde a ${x.etapa} (${fmtData(x.desde)})</em></div>`).join('')}</div>`;
   }
 
   // Faixas desde a autorização
   const cont = FAIXAS.map(f => totais.filter(x => faixaDe(x.total) === f).length);
   const cmax = Math.max(...cont, 1);
-  $('prz-faixas').innerHTML = `<div class="histo">${cont.map((n, i) => `<div><b>${n}</b><span style="height:${n / cmax * 80}%;background:${FAIXAS[i].c}"></span></div>`).join('')}</div>
-    <div class="histo-rot">${FAIXAS.map(f => `<div>${f.r}</div>`).join('')}</div>
+  $('prz-faixas').innerHTML = `<div class="secs">${cont.map((n, i) => `
+    <div class="nome">${FAIXAS[i].r}</div>
+    <div class="trilho" style="cursor:default"><span style="width:calc(${n / cmax} * (100% - 9rem));background:${FAIXAS[i].c}"></span><em><b>${n}</b> obra(s)${totais.length ? ` · ${(n / totais.length * 100).toFixed(0)}%` : ''}</em></div>`).join('')}</div>
     <div class="nota" style="margin-top:12px">Obras em andamento com data de autorização (${totais.length}). A planilha não tem coluna de <b>prazo previsto</b>, então o painel mede o tempo decorrido, não o atraso. Com essa coluna, esta página passa a mostrar as obras atrasadas.</div>`;
 
   // Checagens de cadastro
@@ -1886,12 +1904,12 @@ function renderPrazos(d) {
   // Aguardando recursos
   if (!aguard.length) $('prz-aguard').innerHTML = '<div class="vazio">Nenhum projeto aguardando emenda no filtro.</div>';
   else {
-    const rotulo = rotulador(aguard);
+    const nome = nomeCompleto(aguard);
     const ord = aguard.slice().sort((a, b) => b.externo - a.externo);
     $('prz-aguard').innerHTML = `<div class="tabela-wrap" style="max-height:330px"><table>
       <thead><tr><th style="cursor:default">Projeto</th><th style="cursor:default">Origem prevista</th><th class="num" style="cursor:default">Externo</th><th class="num" style="cursor:default">Contrapartida</th></tr></thead>
       <tbody>${ord.map(p => `<tr ${abre(p)}>
-        <td class="proj"><b>${esc(rotulo(p))}</b><small>${esc(p.sec)}${p.ano !== 'Sem ano' ? ' · ' + p.ano : ''}</small></td>
+        <td class="proj"><b>${esc(nome(p).t)}${nome(p).d ? ` <span style="font-weight:400;color:var(--texto-2)">— ${esc(nome(p).d)}</span>` : ''}</b><small>${esc(p.sec)}${p.ano !== 'Sem ano' ? ' · ' + p.ano : ''}</small></td>
         <td>${p.origem ? esc(p.origem) : '<span style="color:var(--texto-3)">não informada</span>'}</td>
         <td class="num">${p.externo ? fmtReal(p.externo) : '—'}</td>
         <td class="num">${p.proprio + p.melhoria ? fmtReal(p.proprio + p.melhoria) : '—'}</td></tr>`).join('')}</tbody></table></div>
@@ -1906,7 +1924,11 @@ function renderPrazos(d) {
   $('prz-limpar').hidden = !sel;
   tabelaProjetos('prz-tabela', linhas.map(x => x.p), [
     COL.projeto, COL.sec, COL.valor('Valor Projetado', p => p.proj), COL.sit,
-    { r: 'Pendências', cls: 'chips', desc: true, v: p => pendDe.get(p).length, h: p => pendDe.get(p).map(c => `<span class="chip">${esc(c.r)}</span>`).join(''), csv: p => pendDe.get(p).map(c => c.r).join(' | ') }
+    { r: 'Pendências', cls: 'chips', desc: true, v: p => pendDe.get(p).length, h: p => {
+      // a pendência selecionada (ou a primeira) + "+N" para as demais; a lista completa sai no CSV e no detalhe do projeto
+      const f = pendDe.get(p), prim = sel || f[0], n = f.length - 1;
+      return `<span class="chip">${esc(prim.r)}</span>${n ? `<span class="chip mais">+${n} outra${n > 1 ? 's' : ''}</span>` : ''}`;
+    }, csv: p => pendDe.get(p).map(c => c.r).join(' | ') }
   ], 'Nenhuma pendência de cadastro no filtro. 🎉');
 }
 
