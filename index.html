@@ -464,6 +464,13 @@
   .gav-fis { display: flex; align-items: center; gap: .75rem; }
   .gav-fis .barra { flex: 1; height: 1rem; } .gav-fis b { font-size: 1.125rem; color: var(--navy-800); }
   .gav-ok { color: #1a7f33; font-weight: 600; }
+  .gav-itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .375rem; }
+  .gav-itens li { padding: .5rem .625rem; border-radius: .5rem; background: #f4f7fb; cursor: pointer; display: flex; flex-direction: column; gap: 1px; }
+  .gav-itens li:hover, .gav-itens li:focus-visible { background: #e6edf8; }
+  .gav-itens b { font-weight: 600; } .gav-itens b span { font-weight: 400; color: var(--texto-2); }
+  .gav-itens small { color: var(--texto-3); font-size: max(11px, .7812rem); }
+  .gav-itens em { font-style: normal; font-size: .875rem; color: var(--texto-2); }
+  .gav-voltar { align-self: flex-start; }
 
   /* ---------- Conexão com a planilha ---------- */
   .nova-versao { position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 1rem;
@@ -772,7 +779,7 @@
    ===================================================================== */
 // Versão desta página. O montar-site.py troca 'dev' pela data/hora da publicação;
 // o aviso de nova versão compara este valor com o do site publicado.
-const VERSAO_PAINEL = '2026-11-16 21:40';
+const VERSAO_PAINEL = '2026-11-16 21:54';
 
 const CONFIG = {
   aba: 'Investimentos',
@@ -1885,8 +1892,17 @@ function renderPrazos(d) {
   const cmax = Math.max(...cont, 1);
   $('prz-faixas').innerHTML = `<div class="secs">${cont.map((n, i) => `
     <div class="nome">${FAIXAS[i].r}</div>
-    <div class="trilho" style="cursor:default"><span style="width:calc(${n / cmax} * (100% - 9rem));background:${FAIXAS[i].c}"></span><em><b>${n}</b> obra(s)${totais.length ? ` · ${(n / totais.length * 100).toFixed(0)}%` : ''}</em></div>`).join('')}</div>
-    <div class="nota" style="margin-top:12px">Obras em andamento com data de autorização (${totais.length}). A planilha não tem coluna de <b>prazo previsto</b>, então o painel mede o tempo decorrido, não o atraso. Com essa coluna, esta página passa a mostrar as obras atrasadas.</div>`;
+    <div class="trilho" ${n ? `data-faixa="${i}" tabindex="0" role="button" aria-label="Ver as ${n} obra(s) da faixa ${FAIXAS[i].r}"` : 'style="cursor:default"'}><span style="width:calc(${n / cmax} * (100% - 9rem));background:${FAIXAS[i].c}"></span><em><b>${n}</b> obra(s)${totais.length ? ` · ${(n / totais.length * 100).toFixed(0)}%` : ''}</em></div>`).join('')}</div>
+    <div class="nota" style="margin-top:12px">Considera as ${totais.length} obra(s) em andamento com data de autorização e mostra há quanto tempo cada uma foi autorizada. Não indica atraso: para isso a planilha precisaria da coluna <b>prazo previsto</b>. Clique numa faixa para ver as obras.</div>`;
+  const abreFaixa = el => {
+    const f = FAIXAS[+el.dataset.faixa];
+    const itens = totais.filter(x => faixaDe(x.total) === f).sort((a, b) => b.total - a.total);
+    abrirLista(`Desde a autorização: ${f.r}${/\d$/.test(f.r) ? ' dias' : ''}`, `${itens.length} obra(s) em andamento`, itens.map(x => ({ p: x.p, info: `<b>${x.total} dias</b> desde a autorização (${fmtData(x.p.dtAut)}) · ${esc(x.p.situacao)}` })), el);
+  };
+  $('prz-faixas').querySelectorAll('[data-faixa]').forEach(el => {
+    el.onclick = () => abreFaixa(el);
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abreFaixa(el); } };
+  });
 
   // Checagens de cadastro
   if (pendSel && !CHECAGENS.some(c => c.k === pendSel)) pendSel = '';
@@ -2233,9 +2249,28 @@ if (tvInicial) iniciarApresentacao(tvInicial, false);   // endereço com "tv=20"
    Detalhe do projeto (painel lateral) — abre ao clicar em qualquer elemento com data-pid
    ===================================================================== */
 let focoAntes = null;
+// Lista de projetos no painel lateral (ex.: obras de uma faixa de tempo). Clicar num item abre o detalhe,
+// que ganha "← Voltar à lista".
+let gavLista = null;
+function abrirLista(titulo, subtitulo, itens, origemFoco) {
+  esconderDica();
+  gavLista = { titulo, subtitulo, itens };
+  const nome = nomeCompleto(itens.map(i => i.p));
+  $('gaveta').innerHTML = `
+    <div class="gav-topo">
+      <div><span class="pilula" style="background:rgba(255,255,255,.18);max-width:none">${esc(subtitulo)}</span>
+        <h2>${esc(titulo)}</h2></div>
+      <button class="gav-fechar" id="gav-fechar" aria-label="Fechar">×</button>
+    </div>
+    <div class="gav-corpo"><ul class="gav-itens">${itens.map(({ p, info }) => { const r = nome(p); return `
+      <li ${abre(p)}><b>${esc(r.t)}${r.d ? ` <span>— ${esc(r.d)}</span>` : ''}</b><small>${esc(p.sec)}${p.comunidade ? ' · ' + esc(p.comunidade) : ''}</small><em>${info}</em></li>`; }).join('')}</ul></div>`;
+  mostrarGaveta(origemFoco);
+}
 function abrirDetalhe(id, origemFoco) {
   const p = TODOS.find(x => x.id === id);
   if (!p) return;
+  const daLista = gavLista && $('gaveta').classList.contains('aberta');
+  if (!daLista) gavLista = null;
   esconderDica();
   const hoje = hojeUTC();
   const ni = v => !v || /^(Não informad[oa]|Sem ano)$/.test(v) ? '<span style="color:var(--texto-3);font-weight:400">não informado</span>' : esc(v);
@@ -2278,6 +2313,7 @@ function abrirDetalhe(id, origemFoco) {
       <button class="gav-fechar" id="gav-fechar" aria-label="Fechar detalhe">×</button>
     </div>
     <div class="gav-corpo">
+      ${daLista ? `<button class="btn sec mini gav-voltar" id="gav-voltar">← Voltar à lista (${esc(gavLista.titulo)})</button>` : ''}
       ${p.detalhe ? `<section><h3>Descrição</h3><p class="gav-desc">${esc(p.descricao.split(/\r?\n/).slice(1).join('\n').trim() || p.detalhe)}</p></section>` : ''}
       <section><h3>Valores</h3>${valores}</section>
       <section><h3>Fontes de recurso</h3>${fontes}${origemTxt}</section>
@@ -2294,16 +2330,22 @@ function abrirDetalhe(id, origemFoco) {
       </dl></section>
       <section><h3>Pendências de cadastro</h3>${pend.length ? pend.map(c => `<span class="chip">${esc(c.r)}</span>`).join('') : '<span class="gav-ok">✓ Cadastro completo</span>'}</section>
     </div>`;
+  mostrarGaveta(origemFoco);
+  if (daLista) $('gav-voltar').onclick = () => abrirLista(gavLista.titulo, gavLista.subtitulo, gavLista.itens);
+}
+function mostrarGaveta(origemFoco) {
   if (!$('gaveta').classList.contains('aberta')) { focoAntes = origemFoco || document.activeElement; abrirCamada('detalhe'); }
   $('gaveta').inert = false;
   $('gaveta').classList.add('aberta');
   $('gaveta-fundo').classList.add('aberta');
   $('gav-fechar').onclick = fecharDetalhe;
   $('gav-fechar').focus({ preventScroll: true });
+  $('gaveta').querySelector('.gav-corpo').scrollTop = 0;
 }
 function fecharDetalhe() { if ($('gaveta').classList.contains('aberta')) fecharCamada('detalhe'); }
 function fecharDetalheAgora() {
   if (!$('gaveta').classList.contains('aberta')) return;
+  gavLista = null;
   $('gaveta').classList.remove('aberta');
   $('gaveta-fundo').classList.remove('aberta');
   $('gaveta').inert = true;
